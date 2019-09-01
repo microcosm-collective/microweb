@@ -199,7 +199,7 @@
 
 								{% if site.menu|length > 1 %}
 								<li class="dropdown">
-									<a href="#" class="dropdown-toggle" data-toggle="dropdown">{{site.title}} <b class="caret"></b></a>
+									<a href="#" class="dropdown-toggle" data-toggle="dropdown">{% if site.subdomain_key == "one" %}Events{% else %}{{site.title}}{% endif %} <b class="caret"></b></a>
 									<ul class="dropdown-menu">
 									{% for menu_item in site.menu %}
 										<li><a href="{{ menu_item.href }}"{% if menu_item.title %} title="{{menu_item.title}}"{% endif %}>{{menu_item.text}}</a></li>
