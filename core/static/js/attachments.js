@@ -2,6 +2,14 @@
 
   var FileHandler = (function(){
 
+    function ArraytoFileList(files) {
+      const dt = new DataTransfer();
+      files.forEach(function () {
+        dt.items.add(file);
+      })
+      return dt.files;
+    }
+
     var fileHandler = function(opts){
 
       if (typeof opts.el !== 'undefined'){
@@ -35,7 +43,7 @@
 
     fileHandler.prototype.removeFile = function(index){
       this.stack.splice(index,1);
-      this.input.files = this.stack;
+      this.input.files = ArraytoFileList(this.stack);
 
       if(typeof this.onRemove !== 'undefined' && typeof this.onRemove === 'function'){
         this.onRemove(this.stack);
@@ -43,10 +51,8 @@
     };
 
     fileHandler.prototype.clear = function(){
-      for(var i=0,j=this.stack.length;i<j;i++){
-        this.stack.pop();
-      }
-      this.input.files = this.stack;
+      this.stack = [];
+      this.input.files = ArraytoFileList(this.stack);
     };
 
     fileHandler.prototype.parse = function(filesList){
@@ -58,7 +64,7 @@
         return;
       }
 
-      // this.input.files = filesList;
+      this.input.files = ArraytoFileList(this.stack);
       this.callback_counter = files.length;
 
       // ugly way of keeping track of the reader.onload async events
@@ -133,10 +139,10 @@
     };
 
     fileHandler.prototype.changeHandler = function(e){
-        if (!this.event_type){
-          this.event_type = "changed";
-          this.parse(e.target.files);
-        }
+      if (!this.event_type){
+        this.event_type = "changed";
+        this.parse(e.target.files);
+      }
     };
 
     fileHandler.prototype.dragHandler = function(e){
