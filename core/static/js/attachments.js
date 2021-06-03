@@ -49,16 +49,17 @@
       this.input.files = this.stack;
     };
 
-    fileHandler.prototype.parse = function(files){
+    fileHandler.prototype.parse = function(filesList){
 
-      var file, reader, callback;
+      var files = Array.from(filesList);
+      var reader, callback;
 
       if (files.length < 1){
         return;
       }
 
-      this.input.files = files;
-      this.callback_counter = this.input.files.length;
+      // this.input.files = filesList;
+      this.callback_counter = files.length;
 
       // ugly way of keeping track of the reader.onload async events
       // we only want to call our ondragged callback when all "files" have been loaded
@@ -68,16 +69,17 @@
 
         // instance of progressevent assumes readasDataurl was triggered
         if (e instanceof ProgressEvent){
-          modified_attachment = $.extend({},this.input.files[i],{data:e.target.result});
+          modified_attachment = $.extend({},files[i],{data:e.target.result});
           // we use Array.unshift here to push image files to the front of the stack (ie. opposite of Array.push)
           // this makes it easier when we render to html (ie. will render all images first, then non-images)
           this.stack.unshift(modified_attachment);
         }else{
-          modified_attachment = this.input.files[i];
+          modified_attachment = files[i];
           this.stack.push(modified_attachment);
         }
 
         this.callback_counter--;
+
         if (this.callback_counter <= 0){
           if(typeof this.onDragged !== 'undefined' && typeof this.onDragged === 'function'){
             this.onDragged(this.stack);
