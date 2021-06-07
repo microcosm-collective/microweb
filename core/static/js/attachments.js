@@ -64,7 +64,7 @@
         return;
       }
 
-      this.input.files = ArraytoFileList(files);
+      this.input.files = ArraytoFileList(filesList);
       this.callback_counter = files.length;
 
       // ugly way of keeping track of the reader.onload async events
