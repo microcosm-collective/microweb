@@ -4,7 +4,7 @@
 
     function ArraytoFileList(files) {
       const dt = new DataTransfer();
-      files.forEach(function () {
+      files.forEach(function (file) {
         dt.items.add(file);
       })
       return dt.files;
@@ -55,16 +55,22 @@
       this.input.files = ArraytoFileList(this.stack);
     };
 
-    fileHandler.prototype.parse = function(filesList){
+    fileHandler.prototype.parse = function(filesRaw){
 
-      var files = Array.from(filesList);
       var reader, callback;
+
+      var files = filesRaw.filter(function (f) {
+        var match = this.stack.find(function (sf) {
+          return sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified
+        });
+
+        return !match;
+      }.bind(this));
 
       if (files.length < 1){
         return;
       }
 
-      this.input.files = ArraytoFileList(filesList);
       this.callback_counter = files.length;
 
       // ugly way of keeping track of the reader.onload async events
@@ -90,7 +96,9 @@
           if(typeof this.onDragged !== 'undefined' && typeof this.onDragged === 'function'){
             this.onDragged(this.stack);
           }
+
           this.event_type = false;
+          this.input.files = ArraytoFileList(files);
         }
       },this);
 
@@ -141,7 +149,7 @@
     fileHandler.prototype.changeHandler = function(e){
       if (!this.event_type){
         this.event_type = "changed";
-        this.parse(e.target.files);
+        this.parse(Array.from(e.target.files));
       }
     };
 
@@ -151,11 +159,15 @@
     };
 
     fileHandler.prototype.dropHandler = function(e){
+      var fileList = e.originalEvent.dataTransfer.files;
+
       e.stopPropagation();
       e.preventDefault();
+
       if (!this.event_type){
         this.event_type = "dropped";
-        this.parse(e.originalEvent.dataTransfer.files);
+        this.input.files = fileList
+        this.parse(Array.from(fileList));
       }
     };
 
