@@ -42,8 +42,16 @@
     };
 
     fileHandler.prototype.removeFile = function(index){
-      this.stack.splice(index,1);
-      this.input.files = ArraytoFileList(this.stack);
+      var sf = this.stack.slice(index, index+1)[0];
+      this.stack = this.stack.filter(function (i) {
+        return i !== sf;
+      });
+
+      var files = Array.from(this.input.files).filter(function (f) {
+        return !(sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified);
+      });
+
+      this.input.files = ArraytoFileList(files);
 
       if(typeof this.onRemove !== 'undefined' && typeof this.onRemove === 'function'){
         this.onRemove(this.stack);
@@ -52,7 +60,7 @@
 
     fileHandler.prototype.clear = function(){
       this.stack = [];
-      this.input.files = ArraytoFileList(this.stack);
+      this.input.files = ArraytoFileList([]);
     };
 
     fileHandler.prototype.parse = function(filesRaw){
@@ -61,7 +69,7 @@
 
       var files = filesRaw.filter(function (f) {
         var match = this.stack.find(function (sf) {
-          return sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified
+          return sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified;
         });
 
         return !match;

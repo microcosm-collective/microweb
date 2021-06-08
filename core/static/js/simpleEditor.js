@@ -262,7 +262,6 @@
 
       if (delete_confirm){
         if (fileToBeRemoved.length > 0){
-
           if (typeof this.attachments_delete == 'undefined'){
             this.attachments_delete = [];
           }
@@ -274,14 +273,19 @@
             this.form.append(field_attachments_delete);
           }
 
-          if (this.attachments_delete.indexOf(fileToBeRemoved.attr('data-rel')) === -1){
+          var isSavedFile = !!fileToBeRemoved.attr('src').match(/(http|https)\:\/\//);
+          var notAlreadyDeleted = this.attachments_delete.indexOf(fileToBeRemoved.attr('data-rel')) === -1;
+
+          if (isSavedFile && notAlreadyDeleted) {
             this.attachments_delete.push(fileToBeRemoved.attr('data-rel'));
             field_attachments_delete.val(this.attachments_delete.join(','));
+          } else {
+            this.fileHandler.removeFile(self.index());
           }
-
-        }else{
+        } else {
           this.fileHandler.removeFile(self.index());
         }
+
         parent.remove();
       }
 
