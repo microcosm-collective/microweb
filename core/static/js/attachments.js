@@ -97,7 +97,9 @@
           // this makes it easier when we render to html (ie. will render all images first, then non-images)
           this.stack.unshift(modified_attachment);
         } else {
-          modified_attachment = files[i];
+          modified_attachment = $.extend({},files[i], {
+            fileRef: files[i],
+          });
           this.stack.push(modified_attachment);
         }
 
