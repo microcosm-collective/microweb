@@ -89,11 +89,14 @@
 
         // instance of progressevent assumes readasDataurl was triggered
         if (e instanceof ProgressEvent){
-          modified_attachment = $.extend({},files[i],{data:e.target.result});
+          modified_attachment = $.extend({},files[i], {
+            data: e.target.result,
+            fileRef: files[i],
+          });
           // we use Array.unshift here to push image files to the front of the stack (ie. opposite of Array.push)
           // this makes it easier when we render to html (ie. will render all images first, then non-images)
           this.stack.unshift(modified_attachment);
-        }else{
+        } else {
           modified_attachment = files[i];
           this.stack.push(modified_attachment);
         }
@@ -106,7 +109,9 @@
           }
 
           this.event_type = false;
-          this.input.files = ArraytoFileList(files);
+          this.input.files = ArraytoFileList(this.stack.map(function(f) {
+            return f.fileRef;
+          }));
         }
       },this);
 
@@ -150,8 +155,7 @@
     };
 
     fileHandler.prototype.clickHandler = function(e){
-      this.input.value = null;
-      this.stack = [];
+      // noop
     };
 
     fileHandler.prototype.changeHandler = function(e){
