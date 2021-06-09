@@ -188,11 +188,13 @@
 
       /*
       *   note 1: this function checks for two states of data hence the various
-          checks below. The two states have different data structures.
+      *   checks below. The two states have different data structures.
       *   1) directly from the form (check for file.type)
       *   2) fetched via ajax from /attachments api endpoint (check for file.fileHash)
-
+      *
       *   note 2: data-rel is used for removing/deleting an attachment from the comment
+      *   note 3: data-idx is used for removing/deleting a new attachment from the new files stack
+      *   note 3: data-new is used to decide whether it's an existing one or not
       */
 
       if(files.length>0){
@@ -213,9 +215,12 @@
             }
             if (typeof files[i].fileHash !== 'undefined'){
               img.setAttribute('data-rel', files[i].fileHash);
+              li.setAttribute('data-new', false);
             }else{
               img.setAttribute('data-rel', files[i].name || files[i].fileName);
               li.className = li.className + " new-attachment";
+              li.setAttribute('data-idx', i);
+              li.setAttribute('data-new', true);
             }
 
             img.name = files[i].name || files[i].fileName;
@@ -229,9 +234,12 @@
 
             if (typeof files[i].fileHash !== 'undefined'){
               a.setAttribute('data-rel', files[i].fileHash);
+              li.setAttribute('data-new', false);
             }else{
               a.setAttribute('data-rel', files[i].name || files[i].fileName);
               li.className = li.className + " new-attachment";
+              li.setAttribute('data-idx', i);
+              li.setAttribute('data-new', true);
             }
             a.name = files[i].name || files[i].fileName;
             a.innerHTML = files[i].name || files[i].fileName;
@@ -256,6 +264,7 @@
     simpleEditor.prototype.removeAttachmentFile = function(e){
       var self = $(e.currentTarget),
           parent = self.parent(),
+          isSavedFile = !parent.data('new'),
           fileToBeRemoved = parent.find('[data-rel]');
 
       var delete_confirm = window.confirm("Are you sure you want to remove this attachment?");
@@ -273,16 +282,16 @@
             this.form.append(field_attachments_delete);
           }
 
-          var isSavedFile = !!fileToBeRemoved.attr('src').match(/(http|https)\:\/\//);
           var notAlreadyDeleted = this.attachments_delete.indexOf(fileToBeRemoved.attr('data-rel')) === -1;
 
           if (isSavedFile && notAlreadyDeleted) {
             this.attachments_delete.push(fileToBeRemoved.attr('data-rel'));
             field_attachments_delete.val(this.attachments_delete.join(','));
           } else {
-            this.fileHandler.removeFile(self.index());
+            this.fileHandler.removeFile(parent.data('idx'));
           }
         } else {
+          // GOTCHA: this should never happen, I guess?
           this.fileHandler.removeFile(self.index());
         }
 
