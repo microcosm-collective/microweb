@@ -1,7 +1,11 @@
 #!/bin/bash
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	sudo apt-get -y install build-essential fabric libevent1-dev libmemcached-dev python-pip python2.7-dev
+	sudo apt-get install python2
+	curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+	sudo python2 get-pip.py
+	rm get-pip.py
+	sudo apt-get -y install build-essential fabric libevent-dev libmemcached-dev python2.7-dev python2-dev zlib1g-dev
 	sudo pip install virtualenv
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	brew install libmemcached
