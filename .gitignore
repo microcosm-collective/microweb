@@ -1,6 +1,3 @@
-# Virtualenv created by dependencies script.
-ENV
-
 # Compiled python files.
 *.pyc
 
