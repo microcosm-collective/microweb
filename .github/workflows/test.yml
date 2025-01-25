@@ -41,4 +41,4 @@ jobs:
       - name: Load settings
         run: cp microweb/local_settings.py.ci microweb/local_settings.py
       - name: Run tests
-        run: PYTHONPATH=. DJANGO_SETTINGS_MODULE=microweb.settings pytest
+        run: PYTHONPATH=. DJANGO_SETTINGS_MODULE=microweb.settings pytest tests core/tests/tests.py
