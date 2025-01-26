@@ -1,14 +1,12 @@
 # Microweb
 
-[Microco.sm](http://microco.sm) is a new forum SaaS product, founded by [David Kitchen](https://twitter.com/buro9) and [Matt Cottingham](https://twitter.com/mattrco).
+[Microco.sm](http://microco.sm) is a new forum SaaS product, founded by [Dee Kitchen](https://dee.kitchen) and [Matt Cottingham](https://twitter.com/mattrco).
 
 Communities are already using Microco.sm as their forum software of choice, such as the [Espruino Forum](http://forum.espruino.com) and [LFGSS](https://www.lfgss.com).
 
-Microweb is the official web client for Microco.sm, written in Django. If you're not familiar with the Microcosm API, you should start by reading the [API documentation](http://microcosm-cc.github.io/).
+Microweb is the official web client for Microco.sm, written in Django. If you're not familiar with the Microcosm API, you should start by reading the [API documentation](https://github.com/microcosm-collective/microcosm-docs).
 
 If you find any problems, just raise an issue on github and we'll respond ASAP.
-
-[![Build Status](https://travis-ci.org/microcosm-cc/microweb.png)](https://travis-ci.org/microcosm-cc/microweb)
 
 ## Project setup
 
@@ -30,15 +28,15 @@ The layout is as follows:
 
 ```
 ├── microweb
-│   ├── comments
-│   ├── conversations
-│   ├── core
-│   ├── events
-│   ├── huddles
-│   ├── microcosms
-│   ├── profiles
-│   ├── search
-│   ├── updates
+│   ├── comments
+│   ├── conversations
+│   ├── core
+│   ├── events
+│   ├── huddles
+│   ├── microcosms
+│   ├── profiles
+│   ├── search
+│   ├── updates
 ```
 
 The `core` package contains a client for the Microcosm API. If you're familiar with Django, the rest of the packages and modules will look familiar.
@@ -51,7 +49,7 @@ Unit tests can be run with:
 python manage.py test
 ```
 
-There is also an [integration test suite using selenium](https://github.com/microcosm-cc/microweb-integration) that runs as a standalone process.
+There is also an [integration test suite using selenium](https://github.com/microcosm-collective/microweb-selenium-tests) that runs as a standalone process.
 
 ## User authentication
 
@@ -87,11 +85,10 @@ So on each request we make a couple of calls to the API to check if the user has
 
 ## Running a development instance
 
-If you've followed the instructions above on setting up a virtualenv, the next thing you'll need to do is fill in `local_settings.py` with your API key ([email us](mailto:founders@microcosm.cc) if you don't have one). Use [the template here](https://github.com/microcosm-cc/microweb/blob/master/microweb/local_settings.py.sample) as a guide.
+If you've followed the instructions above on setting up a virtualenv, the next thing you'll need to do is fill in `local_settings.py` with your API key ([email us](mailto:founders@microcosm.cc) if you don't have one). Use [the template here](https://github.com/microcosm-collective/microweb/blob/main/microweb/local_settings.py.sample) as a guide.
 
 If you run with `DEBUG = True` (for development only!), static files should work correctly. In production, we use nginx to serve these.
 
 ## Deploying
 
 We use [fabric](http://www.fabfile.org/) as our deployment tool. To use this with your own instance, you'll need to modify `fabfile.py` to contain the hosts you wish to deploy to.
-
