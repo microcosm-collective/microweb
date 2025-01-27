@@ -16,13 +16,15 @@ from core.api.exceptions import APIException
 from core.views import respond_with_error
 from core.views import build_pagination_links
 
-logger = logging.getLogger('trending.views')
-list_template = 'trending.html'
+logger = logging.getLogger("trending.views")
+list_template = "trending.html"
 
 
 @require_safe
 def list(request):
-    url, params, headers = Trending.build_request(request.get_host(), access_token=request.access_token)
+    url, params, headers = Trending.build_request(
+        request.get_host(), access_token=request.access_token
+    )
     request.view_requests.append(grequests.get(url, params=params, headers=headers))
     try:
         responses = response_list_to_dict(grequests.map(request.view_requests))
@@ -31,13 +33,15 @@ def list(request):
     trending = Trending.from_api_response(responses[url])
 
     view_data = {
-        'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
-        'site': Site(responses[request.site_url]),
-        'content': trending,
-        'pagination': build_pagination_links(responses[url]['items']['links'], trending.items),
-        'site_section': 'trending'
+        "user": Profile(responses[request.whoami_url], summary=False)
+        if request.whoami_url
+        else None,
+        "site": Site(responses[request.site_url]),
+        "content": trending,
+        "pagination": build_pagination_links(
+            responses[url]["items"]["links"], trending.items
+        ),
+        "site_section": "trending",
     }
 
     return render(request, list_template, view_data)
-
-

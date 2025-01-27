@@ -3,6 +3,7 @@ from django.conf.urls import patterns
 
 from redirect import views
 
-urlpatterns = patterns('',
-    url(r'.+/$', views.redirect_or_404),
+urlpatterns = patterns(
+    "",
+    url(r".+/$", views.redirect_or_404),
 )
