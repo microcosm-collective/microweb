@@ -9,4 +9,4 @@ class APIException(Exception):
         super(APIException, self).__init__(error_message)
 
     def __str__(self):
-        return 'HTTP status: %d: %s' % (self.status_code, self.message)
+        return "HTTP status: %d: %s" % (self.status_code, self.message)

@@ -3,7 +3,8 @@ from django.conf import settings
 
 from pyga.requests import Tracker, Page, Session, Visitor
 
-class GAMiddleware():
+
+class GAMiddleware:
 
     def process_request(self, request):
         if settings.GA_ENABLED:

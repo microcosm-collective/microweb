@@ -24,9 +24,9 @@ from core.views import build_pagination_links
 from core.views import respond_with_error
 from core.views import require_authentication
 
-logger = logging.getLogger('ignored.views')
+logger = logging.getLogger("ignored.views")
 
-template_name = 'ignored.html'
+template_name = "ignored.html"
 
 
 @require_authentication
@@ -34,18 +34,14 @@ template_name = 'ignored.html'
 def ignored(request):
 
     try:
-        offset = int(request.GET.get('offset', 0))
+        offset = int(request.GET.get("offset", 0))
     except ValueError:
         offset = 0
 
     url, params, headers = Ignored.build_request(
-        request.get_host(),
-        offset=offset,
-        access_token=request.access_token
+        request.get_host(), offset=offset, access_token=request.access_token
     )
-    request.view_requests.append(
-        grequests.get(url, params=params, headers=headers)
-    )
+    request.view_requests.append(grequests.get(url, params=params, headers=headers))
 
     try:
         responses = response_list_to_dict(grequests.map(request.view_requests))
@@ -53,56 +49,55 @@ def ignored(request):
         return respond_with_error(request, exc)
     ignoredItems = Ignored.from_api_response(responses[url])
 
-
     view_data = {
-        'user': Profile(
-            responses[request.whoami_url], summary=False
-        ) if request.whoami_url else None,
-        'site': Site(responses[request.site_url]),
-        'content': ignoredItems,
-        'pagination': build_pagination_links(responses[url]['ignored']['links'], ignoredItems),
-        'site_section': 'ignored',
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
+        "site": Site(responses[request.site_url]),
+        "content": ignoredItems,
+        "pagination": build_pagination_links(
+            responses[url]["ignored"]["links"], ignoredItems
+        ),
+        "site_section": "ignored",
     }
 
     return render(request, template_name, view_data)
 
 
 @require_authentication
-@require_http_methods(['POST',])
+@require_http_methods(
+    [
+        "POST",
+    ]
+)
 @cache_control(must_revalidate=True, max_age=0)
 def ignore(request):
     """
     View for (un)ignoring a single item.
     """
-    item_type = request.POST.get('item_type')
-    item_id = int(request.POST.get('item_id'))
+    item_type = request.POST.get("item_type")
+    item_id = int(request.POST.get("item_id"))
     delete = False
-    if request.POST.get('delete'):
+    if request.POST.get("delete"):
         delete = True
 
-    if item_type == '':
+    if item_type == "":
         return HttpResponseBadRequest()
 
     if item_id <= 0:
         return HttpResponseBadRequest()
 
-    data = {'itemType': item_type, 'itemId': item_id}
+    data = {"itemType": item_type, "itemId": item_id}
 
     if delete:
-        response = Ignored.delete_api(
-            request.get_host(),
-            data,
-            request.access_token
-        )
+        response = Ignored.delete_api(request.get_host(), data, request.access_token)
     else:
-        response = Ignored.add_api(
-            request.get_host(),
-            data,
-            request.access_token
-        )
+        response = Ignored.add_api(request.get_host(), data, request.access_token)
 
     if response.status_code != requests.codes.ok:
-        print('ignore: ' + response.text)
+        print("ignore: " + response.text)
         return HttpResponseBadRequest()
 
-    return HttpResponseRedirect(reverse('list-ignored'))
+    return HttpResponseRedirect(reverse("list-ignored"))
