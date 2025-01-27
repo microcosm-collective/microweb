@@ -135,14 +135,14 @@ INSTALLED_APPS = (
 # Example values can be found in local_settings.py.example
 
 # Credentials generated when registering an application.
-from local_settings import CLIENT_ID
-from local_settings import CLIENT_SECRET
+from .local_settings import CLIENT_ID
+from .local_settings import CLIENT_SECRET
 
 # Microcosm API settings.
-from local_settings import API_SCHEME
-from local_settings import API_DOMAIN_NAME
-from local_settings import API_PATH
-from local_settings import API_VERSION
+from .local_settings import API_SCHEME
+from .local_settings import API_DOMAIN_NAME
+from .local_settings import API_PATH
+from .local_settings import API_VERSION
 
 if API_SCHEME == '' or API_DOMAIN_NAME == '' or API_PATH == '' or API_VERSION == '':
     raise Exception('Please define API settings in local_settings.py')

@@ -1,7 +1,7 @@
 import grequests
 import logging
 
-from urlparse import urlunparse
+from urllib.parse import urlunparse
 
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -46,13 +46,13 @@ def fill_from_get(request, initial):
     Populate comment form fields from GET parameters.
     """
 
-    if request.GET.has_key('itemId'):
+    if 'itemId' in request.GET:
         initial['itemId'] = int(request.GET.get('itemId', None))
-    if request.GET.has_key('itemType'):
+    if 'itemType' in request.GET:
         if request.GET['itemType'] not in COMMENTABLE_ITEM_TYPES:
             raise ValueError
         initial['itemType'] = request.GET.get('itemType', None)
-    if request.GET.has_key('inReplyTo'):
+    if 'inReplyTo' in request.GET:
         initial['inReplyTo'] = int(request.GET.get('inReplyTo', None))
 
     return initial

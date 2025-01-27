@@ -4,8 +4,8 @@ import datetime
 import json
 import sys
 import requests
-import urlparse
-import urllib
+import urllib.parse
+import urllib.request, urllib.parse, urllib.error
 
 """
 Utilities for fetching JSON from the microcosm API and writing it to files
@@ -14,7 +14,7 @@ for unit testing.
 
 def main():
     if len(sys.argv) != 3:
-        print 'Usage: python %s <api_subdomain> <access_token>' % sys.argv[0]
+        print('Usage: python %s <api_subdomain> <access_token>' % sys.argv[0])
         sys.exit(2)
 
     site_subdomain = sys.argv[1]
@@ -23,7 +23,7 @@ def main():
 
     # site
     ident = 'Fetching site'
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/site', access_token=access_token)
     response = requests.get(url, headers={'Accept-Encoding': 'application/json'})
     if response.status_code != 200:
@@ -36,7 +36,7 @@ def main():
 
     # whoami
     ident = 'Fetching whoami'
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/whoami', access_token=access_token)
     response = requests.get(url, headers={'Accept-Encoding': 'application/json'})
     if response.status_code != 200:
@@ -50,7 +50,7 @@ def main():
 
     # profile
     ident = 'Fetching profile ID %s' % profile_id
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/profiles/%s' % profile_id, access_token=access_token)
     response = requests.get(url, headers={'Accept-Encoding': 'application/json'})
     if response.status_code != 200:
@@ -63,7 +63,7 @@ def main():
 
     # microcosms
     ident = 'Creating microcosm'
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/microcosms', access_token=access_token)
     data = json.dumps({
         'title': 'Generated',
@@ -78,11 +78,11 @@ def main():
         microcosm.write(response.content)
         microcosm.close()
         microcosm_id = response.json()['data']['id']
-        print 'Created microcosm with ID: %d' % microcosm_id
+        print('Created microcosm with ID: %d' % microcosm_id)
 
     # conversations
     ident = 'Creating conversation without comment'
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/conversations', access_token=access_token)
     data = json.dumps({
         'microcosmId': microcosm_id,
@@ -99,7 +99,7 @@ def main():
         conversation.close()
 
     ident = 'Creating conversation with comment'
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/conversations', access_token=access_token)
     data = json.dumps({
         'microcosmId': microcosm_id,
@@ -116,11 +116,11 @@ def main():
         conversation.write(response.content)
         conversation.close()
         conversation_id = int(response.json()['data']['id'])
-        print 'Created conversation with ID: %d' % conversation_id
+        print('Created conversation with ID: %d' % conversation_id)
 
     # generate comments on the conversation so pagination can be tested
     ident = 'Creating 30 comments on conversation with ID: %d' % conversation_id
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/comments', access_token=access_token)
     for comment_num in range(30):
         data = json.dumps({
@@ -133,11 +133,11 @@ def main():
             failures[ident] = response.content
             exit_with_error(failures)
         else:
-            print 'Comment %d done' % comment_num
+            print('Comment %d done' % comment_num)
 
     # save conversation as conversation_with_comment_pages
     ident = 'Fetching conversation %d' % conversation_id
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, '/api/v1/conversations/%d' % conversation_id)
     response = requests.get(url, headers={'Accept-Encoding': 'application/json'})
     if response.status_code != 200:
@@ -150,7 +150,7 @@ def main():
 
     # events
     ident = 'Creating event without comment'
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/events', access_token=access_token)
     when = (datetime.datetime.utcnow() + datetime.timedelta(weeks=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
     data = json.dumps({
@@ -171,7 +171,7 @@ def main():
         event.close()
 
     ident = 'Creating event with comment'
-    print ident
+    print(ident)
     url = unparse_api_url(site_subdomain, 'api/v1/events', access_token=access_token)
     when = (datetime.datetime.utcnow() + datetime.timedelta(weeks=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
     data = json.dumps({
@@ -198,13 +198,13 @@ def unparse_api_url(site_subdomain, path, query_params={}, access_token=''):
     netloc = '%s.microco.sm' % site_subdomain
     if access_token:
         query_params['access_token'] = access_token
-    querystring = urllib.urlencode(query_params)
-    return urlparse.urlunparse(('https', netloc, path, '', querystring, ''))
+    querystring = urllib.parse.urlencode(query_params)
+    return urllib.parse.urlunparse(('https', netloc, path, '', querystring, ''))
 
 
 def exit_with_error(failures):
-    print 'Failed. Errors follow...'
-    print failures
+    print('Failed. Errors follow...')
+    print(failures)
     sys.exit(1)
 
 

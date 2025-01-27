@@ -156,7 +156,7 @@ def edit(request, profile_id):
         form = edit_form(request.POST)
         if form.is_valid():
             # Upload new avatar if present.
-            if request.FILES.has_key('avatar'):
+            if 'avatar' in request.FILES:
                 file_request = FileMetadata.from_create_form(request.FILES['avatar'])
                 file_metadata = file_request.create(request.get_host(), request.access_token, 100, 100)
                 try:
@@ -170,7 +170,7 @@ def edit(request, profile_id):
             profile_response = profile_request.update(request.get_host(), request.access_token)
 
             # Create, update or delete comment on profile (single comment acts as a bio).
-            if request.POST.has_key('markdown'):
+            if 'markdown' in request.POST:
                 profile_comment = {
                     'itemType': 'profile',
                     'itemId': profile_response.id,

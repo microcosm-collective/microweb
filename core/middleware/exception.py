@@ -9,7 +9,7 @@ class ExceptionMiddleware():
     def __init__(self):
 
         if not hasattr(settings, 'RIEMANN_ENABLED'):
-            raise AssertionError, 'Please declare RIEMANN_ENABLED in settings.py'
+            raise AssertionError('Please declare RIEMANN_ENABLED in settings.py')
 
         if settings.RIEMANN_ENABLED:
             self.client = bernhard.Client(host=settings.RIEMANN_HOST, transport=bernhard.UDPTransport)

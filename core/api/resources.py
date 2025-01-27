@@ -4,8 +4,8 @@ from django.conf import settings
 
 import requests
 
-from urlparse import urlparse
-from urlparse import urlunparse
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 from dateutil.parser import parse as parse_timestamp
 
@@ -145,7 +145,7 @@ def api_url_to_gui_url(api_url):
     # API paths are resources, GUI paths are directories
     # Add trailing slash if missing
     if gui_url.path[-1:] != '/':
-        return urlunparse((gui_url[0],gui_url[1],gui_url[2] + u'/',gui_url[3],gui_url[4],gui_url[5]))
+        return urlunparse((gui_url[0],gui_url[1],gui_url[2] + '/',gui_url[3],gui_url[4],gui_url[5]))
 
     return urlunparse(gui_url)
 
@@ -1995,7 +1995,7 @@ class Attachment(object):
         elif comment_id:
             url = build_url(host, ['comments', comment_id, 'attachments'])
         else:
-            raise AssertionError, 'You must supply a profile_id or comment_id to attach to'
+            raise AssertionError('You must supply a profile_id or comment_id to attach to')
 
         attachment = {'FileHash': file_hash, 'FileName': file_name}
         headers = APIResource.make_request_headers(access_token)

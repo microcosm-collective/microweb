@@ -1,6 +1,6 @@
 import logging
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 from django.views.decorators.http import require_safe
 
@@ -35,7 +35,7 @@ def redirect_or_404(request):
         logger.error(str(APIException))
 
     # Reverse the effect of APPEND_SLASH on the path.
-    url_parts = urlparse.urlsplit(request.build_absolute_uri())
+    url_parts = urllib.parse.urlsplit(request.build_absolute_uri())
     path = url_parts.path
     redirect_request = ''
     if path.endswith('/'):
@@ -63,30 +63,30 @@ def redirect_or_404(request):
 
     # Construct the 301 based on the resource.
     redirect_path = '/' + RESOURCE_PLURAL[resource['itemType']]
-    if resource.has_key('itemId'):
+    if 'itemId' in resource:
         redirect_path += '/' + str(resource['itemId'])
 
     # Hack comments to show in context.
-    if resource['itemType'] == 'comment' and resource.has_key('itemId'):
+    if resource['itemType'] == 'comment' and 'itemId' in resource:
         redirect_path += '/' + 'incontext'
 
     # Build query parameters.
     query_dict = {}
 
     # Query parameter actions.
-    if resource.has_key('action'):
-        if resource.has_key('search'):
+    if 'action' in resource:
+        if 'search' in resource:
             query_dict['q'] = resource['search']
-        if resource.has_key('online'):
+        if 'online' in resource:
             query_dict['online'] = 'true'
 
     # Record offset.
-    if resource.has_key('offset'):
+    if 'offset' in resource:
         query_dict['offset'] = str(resource['offset'])
 
     # Reconstruct the URL, dropping query parameters and path fragment.
-    parts = (url_parts.scheme, url_parts.netloc, redirect_path, urllib.urlencode(query_dict), '')
-    redirect_url = urlparse.urlunsplit(parts)
+    parts = (url_parts.scheme, url_parts.netloc, redirect_path, urllib.parse.urlencode(query_dict), '')
+    redirect_url = urllib.parse.urlunsplit(parts)
 
     #print "Redirecting %s to %s" % (request.get_full_path(), redirect_url)
     return HttpResponseRedirect(redirect_url)

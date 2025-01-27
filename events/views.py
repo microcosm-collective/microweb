@@ -259,7 +259,7 @@ def create(request, microcosm_id):
             return HttpResponseRedirect(reverse('single-event', args=(event_response.id,)))
 
         else:
-            print 'Event form is not valid'
+            print('Event form is not valid')
             view_data['form'] = form
             view_data['microcosm_id'] = microcosm_id
             return render(request, form_template, view_data)
@@ -390,7 +390,7 @@ def rsvp(request, event_id):
 def geocode(request):
     if request.access_token is None:
         raise PermissionDenied
-    if request.GET.has_key('q'):
+    if 'q' in request.GET:
         response = GeoCode.retrieve(request.get_host(), request.GET['q'], request.access_token)
         return HttpResponse(response, content_type='application/json')
     else:
