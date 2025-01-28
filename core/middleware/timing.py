@@ -5,11 +5,12 @@ import bernhard
 import time
 
 
-class TimingMiddleware():
-
+class TimingMiddleware:
     def __init__(self):
         if settings.RIEMANN_ENABLED:
-            self.client = bernhard.Client(host=settings.RIEMANN_HOST, transport=bernhard.UDPTransport)
+            self.client = bernhard.Client(
+                host=settings.RIEMANN_HOST, transport=bernhard.UDPTransport
+            )
         else:
             raise exceptions.MiddlewareNotUsed
 
@@ -18,12 +19,14 @@ class TimingMiddleware():
         return None
 
     def process_response(self, request, response):
-        if hasattr(request, 'start_time'):
+        if hasattr(request, "start_time"):
             delta = time.time() - request.start_time
-            self.client.send({
-                'host': 'django',
-                'service': 'microweb',
-                'metric': delta,
-                'tags' : ['timing'],
-            })
+            self.client.send(
+                {
+                    "host": "django",
+                    "service": "microweb",
+                    "metric": delta,
+                    "tags": ["timing"],
+                }
+            )
         return response
