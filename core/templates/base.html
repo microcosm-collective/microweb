@@ -196,6 +196,11 @@
 								<li {% if site_section == "people"%}class="active"{% endif %}>
 									<a href="{% url 'list-profiles' %}?top=true">People</a>
 								</li>
+								{% if site.subdomain_key == "lfgss" %}
+								<li>
+									<a href="https://opencollective.com/microcosm">Donate</a>
+								</li>
+								{% endif %}
 
 								{% if site.menu|length > 1 %}
 								<li class="dropdown">
