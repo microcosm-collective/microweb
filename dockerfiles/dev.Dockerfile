@@ -8,7 +8,6 @@ WORKDIR ${APP_HOME}
 RUN apt-get -qq update && \
     apt-get -yq install --no-install-recommends \
         build-essential \
-        fabric \
         libevent-dev \
         libmemcached-dev \
         zlib1g-dev && \
