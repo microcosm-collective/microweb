@@ -21,3 +21,8 @@ pylibmc==1.2.3
 grequests==0.2.0
 
 newrelic==2.16.0.12
+
+pytest==4.6.11
+
+# httmock is the last version to support requests 1.1.0 (use of prepare_request())
+httmock==1.2.2
