@@ -32,7 +32,7 @@ COPY . /${APP_HOME}
 ADD https://www.lfgss.com/static/js/bootstrap.min.js ${APP_HOME}core/static/js/
 ADD https://www.lfgss.com/static/themes/1/css/bootstrap.min.css ${APP_HOME}core/static/themes/1/css
 
-RUN [ ! -f microweb/local_settings.py ] && echo "Missing config. Using default. Should be fine." && cp microweb/local_settings.py.sample microweb/local_settings.py
+RUN cp microweb/local_settings.py.sample microweb/local_settings.py
 
 ENV PORT 80
 EXPOSE ${PORT}

@@ -1,0 +1,7 @@
+services:
+  microcosm-web-python-test:
+    build:
+      context: "../"
+      dockerfile: dockerfiles/dev.Dockerfile
+    environment:
+      DJANGO_SETTINGS_MODULE: microweb.settings
