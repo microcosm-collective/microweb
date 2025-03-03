@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install ssl dependencies
-      run: apt-get install build-essential libssl-dev
+      run: sudo apt-get install build-essential libssl-dev
     - name: Install python version
       uses: gabrielfalcao/pyenv-action@v18
       with:
