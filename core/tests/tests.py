@@ -1,5 +1,4 @@
 import random
-import string
 import json
 import os
 
@@ -25,10 +24,11 @@ TEST_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 def generate_location():
     # Construct a random subdomain string
-    subdomain = ''
+    subdomain = ""
+    lowercase_letters = "abcdefghijklmnopqrstuvwxyz"
     for x in range(10):
-        subdomain += random.choice(string.lowercase)
-    return '%s.microcosm.app' % subdomain
+        subdomain += random.choice(lowercase_letters)
+    return "%s.microco.sm" % subdomain
 
 
 class BuildURLTests(unittest.TestCase):

@@ -5,6 +5,10 @@ ENV APP_HOME=/srv/www/django/microweb/
 
 WORKDIR ${APP_HOME}
 
+COPY sources-stretch.list /etc/apt/sources.list
+
+RUN apt-get update
+
 RUN apt-get -qq update && \
     apt-get -yq install --no-install-recommends \
     build-essential \
@@ -17,9 +21,7 @@ RUN apt-get -qq update && \
 
 COPY requirements.txt /${APP_HOME}
 
-RUN python -m pip install --upgrade pip \
-    && pip install virtualenv \
-    && pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . /${APP_HOME}
 

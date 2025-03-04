@@ -1,21 +1,21 @@
 Django==1.5.9
-requests==1.1.0
-python-dateutil==1.4
+requests==2.21.0
+python-dateutil==2.4.1
 
 # Google Analytics
-pyga==2.5.0
+pyga==2.6.0
 
 # Production server
 gunicorn==19.10.0
 
 # Riemann client
-bernhard==0.1.1
+# bernhard==0.1.1
 
 # Mock python objects for testing
 mock==1.0.1
 
 # Memcache client
-pylibmc==1.2.3
+pylibmc==1.5
 
 # Gevent requests
 grequests==0.2.0
@@ -23,3 +23,8 @@ grequests==0.2.0
 newrelic==2.16.0.12
 
 whitenoise==2.0.6
+
+pytest==4.6.11
+
+# httmock is the last version to support requests 1.1.0 (use of prepare_request())
+httmock==1.2.2
