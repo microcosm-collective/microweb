@@ -1,9 +1,13 @@
-FROM python:2.7
+FROM python:3.4
 
 ENV APP_HOME /srv/www/django/microweb/
 
 
 WORKDIR ${APP_HOME}
+
+COPY sources-stretch.list /etc/apt/sources.list
+
+RUN apt-get update
 
 RUN apt-get -qq update && \
     apt-get -yq install --no-install-recommends \
@@ -18,11 +22,7 @@ RUN apt-get -qq update && \
 
 COPY requirements.txt /${APP_HOME}
 
-RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py \
-    && python get-pip.py \
-    && rm get-pip.py \
-    && pip install virtualenv \
-    && pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . /${APP_HOME}
 # RUN ./dependencies.sh
@@ -32,7 +32,7 @@ COPY . /${APP_HOME}
 ADD https://www.lfgss.com/static/js/bootstrap.min.js ${APP_HOME}core/static/js/
 ADD https://www.lfgss.com/static/themes/1/css/bootstrap.min.css ${APP_HOME}core/static/themes/1/css
 
-RUN [ ! -f microweb/local_settings.py ] && echo "Missing config. Using default. Should be fine." && cp microweb/local_settings.py.sample microweb/local_settings.py
+RUN cp microweb/local_settings.py.sample microweb/local_settings.py
 
 ENV PORT 80
 EXPOSE ${PORT}
