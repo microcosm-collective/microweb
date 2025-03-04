@@ -3,7 +3,6 @@ import os
 import sys
 
 if __name__ == "__main__":
-    import gevent
     from gevent import monkey
 
     monkey.patch_all()

@@ -3,7 +3,6 @@ import logging
 
 from django.shortcuts import render
 
-from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_safe
 
 from core.api.resources import api_url_to_gui_url

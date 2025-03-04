@@ -5,7 +5,9 @@ import json
 import sys
 import requests
 import urllib.parse
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 
 """
 Utilities for fetching JSON from the microcosm API and writing it to files

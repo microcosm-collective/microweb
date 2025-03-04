@@ -95,7 +95,7 @@ class ModTimeUrlsMiddleware:
             mc_ts = None
 
         try:
-            if not mc_ts is None:
+            if mc_ts is not None:
                 return url + ("&" if contains_question_mark else "?") + "_=" + mc_ts
 
             stat = os.stat(filename)
@@ -103,7 +103,7 @@ class ModTimeUrlsMiddleware:
 
             try:
                 self.mc.set("fmod_" + filename, timestamp)
-            except memcache.Error as e:
+            except memcache.Error:
                 pass
 
             return url + ("&" if contains_question_mark else "?") + "_=" + timestamp

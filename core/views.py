@@ -246,7 +246,7 @@ class LegalView(object):
     @staticmethod
     @require_safe
     def single(request, doc_name):
-        if not doc_name in ["cookies", "privacy", "terms"]:
+        if doc_name not in ["cookies", "privacy", "terms"]:
             return HttpResponseNotFound()
 
         url, params, headers = Legal.build_request(request.get_host(), doc=doc_name)

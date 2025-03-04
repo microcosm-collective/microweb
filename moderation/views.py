@@ -10,7 +10,6 @@ from django.shortcuts import render
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.http import require_safe
 
 from core.api.resources import Conversation
 from core.api.resources import Event

@@ -1,5 +1,7 @@
 import logging
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import urllib.parse
 
 from django.views.decorators.http import require_safe

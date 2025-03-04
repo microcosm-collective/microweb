@@ -5,7 +5,6 @@ from fabric.api import sudo
 from fabric.api import prefix
 
 from fabric.contrib.project import rsync_project
-from fabric.context_managers import settings
 
 from contextlib import contextmanager
 

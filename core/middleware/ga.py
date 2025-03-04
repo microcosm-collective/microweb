@@ -1,4 +1,3 @@
-from django.core import exceptions
 from django.conf import settings
 
 from pyga.requests import Tracker, Page, Session, Visitor
