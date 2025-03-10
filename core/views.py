@@ -1,7 +1,6 @@
 import grequests
 import datetime
 import logging
-import newrelic
 import requests
 import string
 import random
@@ -170,7 +169,7 @@ def build_newest_comment_link(response, request=None):
     campaign = ''
 
     if request is not None:
-        source = request.GET.get('utm_source', '') 
+        source = request.GET.get('utm_source', '')
         medium = request.GET.get('utm_medium', '')
         campaign = request.GET.get('utm_campaign', '')
 
@@ -186,7 +185,7 @@ def build_newest_comment_link(response, request=None):
     if queries.get('comment_id'):
         frag = 'comment' + queries['comment_id'][0]
         del queries['comment_id']
-    
+
     # queries is a dictionary of 1-item lists (as we don't re-use keys in our query string)
     # urlencode will encode the lists into the url (offset=[25]) etc.  So get the values straight.
     for (key, value) in queries.items():
@@ -265,13 +264,9 @@ class ErrorView(object):
         if request.whoami_url:
             profile = Profile(responses[whoami_url], summary=False)
             view_data['user'] = profile
-            newrelic.agent.add_custom_parameter('profile_name', profile.profile_name)
-            newrelic.agent.add_custom_parameter('profile_id', profile.id)
-            newrelic.agent.add_custom_parameter('user_id', profile.user_id)
 
         site = Site(responses[site_url])
         view_data['site'] = site
-        newrelic.agent.add_custom_parameter('site', site.subdomain_key)
 
         context = RequestContext(request, view_data)
         return HttpResponseNotFound(loader.get_template('404.html').render(context))
@@ -293,13 +288,9 @@ class ErrorView(object):
         if request.whoami_url:
             profile = Profile(responses[whoami_url], summary=False)
             view_data['user'] = profile
-            newrelic.agent.add_custom_parameter('profile_name', profile.profile_name)
-            newrelic.agent.add_custom_parameter('profile_id', profile.id)
-            newrelic.agent.add_custom_parameter('user_id', profile.user_id)
 
         site = Site(responses[site_url])
         view_data['site'] = site
-        newrelic.agent.add_custom_parameter('site', site.subdomain_key)
 
         context = RequestContext(request, view_data)
         return HttpResponseForbidden(loader.get_template('403.html').render(context))
@@ -321,13 +312,9 @@ class ErrorView(object):
         # if request.whoami_url:
         #     profile = Profile(responses[whoami_url], summary=False)
         #     view_data['user'] = profile
-        #     newrelic.agent.add_custom_parameter('profile_name', profile.profile_name)
-        #     newrelic.agent.add_custom_parameter('profile_id', profile.id)
-        #     newrelic.agent.add_custom_parameter('user_id', profile.user_id)
 
         site = Site(responses[site_url])
         view_data['site'] = site
-        newrelic.agent.add_custom_parameter('site', site.subdomain_key)
 
         # Provide detailed error if returned in the response.
         if hasattr(exception, 'detail'):
@@ -466,7 +453,7 @@ class Auth0View(object):
         resp = HttpResponseRedirect(target_url)
         expires = datetime.datetime.fromtimestamp(2 ** 31 - 1)
         resp.set_cookie('access_token', access_token, expires=expires, httponly=True)
-       
+
         return resp
 
 def echo_headers(request):
