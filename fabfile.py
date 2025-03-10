@@ -37,7 +37,7 @@ def prod_env():
     env.hosts.append('wpy01.microcosm.cc:2020')
 
 def test_env():
-    env.hosts.append('deployment@dev.microco.sm')
+    env.hosts.append('deployment@dev.microcosm.app')
 
 def destroy_virtualenv():
 

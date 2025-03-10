@@ -25,7 +25,7 @@
 			<ul class="list-people list-people-md">
 				{% for profile in content.participants|slice:":7" %}
 				<li>
-					<a href="{% url 'single-profile' profile.id %}" data-toggle="tooltip" title="{{ profile.profile_name | safe }}"><img src="{% if 'gravatar' in profile.avatar %}{{profile.avatar}}{% elif 'files' in profile.avatar %}https://{{site.subdomain_key}}.microco.sm{{profile.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{profile.profile_name | safe }}" /></a>
+					<a href="{% url 'single-profile' profile.id %}" data-toggle="tooltip" title="{{ profile.profile_name | safe }}"><img src="{% if 'gravatar' in profile.avatar %}{{profile.avatar}}{% elif 'files' in profile.avatar %}https://{{site.subdomain_key}}.microcosm.app{{profile.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{profile.profile_name | safe }}" /></a>
 				</li>
 				{% endfor %}
 				{% if content.participants|length > 7%}
@@ -79,7 +79,7 @@
 				<div class="comment-item-inner">
 					<div class="comment-item-header">
 						<div class="comment-item-author">
-								<img src="{% if 'gravatar' in user.avatar %}{{user.avatar}}{% elif 'files' in user.avatar %}https://{{site.subdomain_key}}.microco.sm{{user.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ user.profile_name | safe }}"/>
+								<img src="{% if 'gravatar' in user.avatar %}{{user.avatar}}{% elif 'files' in user.avatar %}https://{{site.subdomain_key}}.microcosm.app{{user.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ user.profile_name | safe }}"/>
 								<strong>Post a reply</strong>
 						</div>
 					</div>
@@ -113,7 +113,7 @@
 		</h3>
 
 		<p class="metabar-module-author">
-			Started by <a href="{% url 'single-profile' content.meta.created_by.id %}" id="created_by"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{content.meta.created_by.avatar}}{% elif 'files' in content.meta.created_by.avatar %}https://{{site.subdomain_key}}.microco.sm{{content.meta.created_by.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{content.meta.created_by.profile_name | safe }}" /> @{{ content.meta.created_by.profile_name | safe | truncatechars:25 }}</a> <time datetime="{{ content.meta.created|date:"c" }}">{{ content.meta.creates|timesince }}</time>
+			Started by <a href="{% url 'single-profile' content.meta.created_by.id %}" id="created_by"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{content.meta.created_by.avatar}}{% elif 'files' in content.meta.created_by.avatar %}https://{{site.subdomain_key}}.microcosm.app{{content.meta.created_by.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{content.meta.created_by.profile_name | safe }}" /> @{{ content.meta.created_by.profile_name | safe | truncatechars:25 }}</a> <time datetime="{{ content.meta.created|date:"c" }}">{{ content.meta.creates|timesince }}</time>
 		</p>
 	</div>
 </div> <!-- / about -->

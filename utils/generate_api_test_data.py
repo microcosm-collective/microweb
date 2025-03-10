@@ -195,7 +195,7 @@ def main():
 
 
 def unparse_api_url(site_subdomain, path, query_params={}, access_token=''):
-    netloc = '%s.microco.sm' % site_subdomain
+    netloc = '%s.microcosm.app' % site_subdomain
     if access_token:
         query_params['access_token'] = access_token
     querystring = urllib.urlencode(query_params)

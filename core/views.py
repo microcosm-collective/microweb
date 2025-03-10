@@ -81,7 +81,7 @@ def exception_handler(view_func):
             elif e.status_code == 400:
                 # Error code 14 indicates that the requested forum does not exist.
                 if e.detail['errorCode'] == 14:
-                    return HttpResponseRedirect('http://microco.sm')
+                    return HttpResponseRedirect('http://microcosm.app')
             else:
                 raise
     return decorator

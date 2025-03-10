@@ -28,7 +28,7 @@ def generate_location():
     subdomain = ''
     for x in xrange(10):
         subdomain += random.choice(string.lowercase)
-    return '%s.microco.sm' % subdomain
+    return '%s.microcosm.app' % subdomain
 
 
 class BuildURLTests(unittest.TestCase):

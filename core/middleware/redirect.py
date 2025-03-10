@@ -27,7 +27,7 @@ class DomainRedirectMiddleware():
 
         host = request.get_host()
 
-        # Only look at requests to example.microco.sm
+        # Only look at requests to example.microcosm.app
         if host.endswith(settings.API_DOMAIN_NAME):
 
             # Fetch site from cache
@@ -48,7 +48,7 @@ class DomainRedirectMiddleware():
                 except APIException, e:
                     # HTTP 400 indicates a non-existent site.
                     if e.status_code == 404:
-                        return HttpResponseRedirect('http://microco.sm')
+                        return HttpResponseRedirect('http://microcosm.app')
                     logger.error('APIException: %s' % e.message)
                     return HttpResponseRedirect(reverse('server-error'))
                 except RequestException, e:

@@ -22,7 +22,7 @@
 					<ul class="list-people list-people-sm">
 						{% for participant in item.participants|slice:":6" %}
 							<li>
-								<a href="{% url 'single-profile' participant.id %}" data-toggle="tooltip" title="@{{ participant.profile_name | safe }}"><img src="{% if 'gravatar' in participant.avatar %}{{participant.avatar}}{% elif 'files' in participant.avatar %}https://{{site.subdomain_key}}.microco.sm{{participant.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ participant.profile_name | safe }}"/></a>
+								<a href="{% url 'single-profile' participant.id %}" data-toggle="tooltip" title="@{{ participant.profile_name | safe }}"><img src="{% if 'gravatar' in participant.avatar %}{{participant.avatar}}{% elif 'files' in participant.avatar %}https://{{site.subdomain_key}}.microcosm.app{{participant.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ participant.profile_name | safe }}"/></a>
 							</li>
 						{% endfor %}
 						<li>

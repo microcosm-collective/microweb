@@ -15,7 +15,7 @@
 			</div>
 			<div class="comment-item-author" itemprop="author" itemscope itemtype="http://schema.org/Person">
 			{% if comment.meta.created_by %}
-				<a href="{% url 'single-profile' comment.meta.created_by.id %}" itemprop="url"><img src="{% if 'gravatar' in comment.meta.created_by.avatar %}{{comment.meta.created_by.avatar}}{% elif 'files' in comment.meta.created_by.avatar %}https://{{site.subdomain_key}}.microco.sm{{comment.meta.created_by.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ comment.meta.created_by.profile_name | safe }}" align="left" class="gravatar" itemprop="image" /> <strong class="comment-item-author-name" itemprop="name">{{ comment.meta.created_by.profile_name | safe | truncatechars:25 }}</strong></a>
+				<a href="{% url 'single-profile' comment.meta.created_by.id %}" itemprop="url"><img src="{% if 'gravatar' in comment.meta.created_by.avatar %}{{comment.meta.created_by.avatar}}{% elif 'files' in comment.meta.created_by.avatar %}https://{{site.subdomain_key}}.microcosm.app{{comment.meta.created_by.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ comment.meta.created_by.profile_name | safe }}" align="left" class="gravatar" itemprop="image" /> <strong class="comment-item-author-name" itemprop="name">{{ comment.meta.created_by.profile_name | safe | truncatechars:25 }}</strong></a>
 				{% endif %}
 
 				{% if comment.in_reply_to %}
@@ -39,7 +39,7 @@
 						{# template_tags/is_image.py non-images first #}
 						{% if not attachment.file_ext|is_image %}
 						<li class="attachment-link">
-							<a href="https://{{site.subdomain_key}}.microco.sm{{ attachment.meta.links.0.href }}"
+							<a href="https://{{site.subdomain_key}}.microcosm.app{{ attachment.meta.links.0.href }}"
 							 title="{{ attachment.file_name }}">
 							{{ attachment.file_name }}
 							</a>
@@ -50,7 +50,7 @@
 						{# template_tags/is_image.py images second #}
 						{% if attachment.file_ext|is_image %}
 						<li class="attachment-image"{% if comment_attachments.total > 5 %} style="width: 80px; height: 80px; float:left; margin:2px;"{% endif %}>
-							{% if comment_attachments.total > 5 %}<a href="https://{{site.subdomain_key}}.microco.sm{{ attachment.meta.links.0.href }}">{% endif %}<img src="https://{{site.subdomain_key}}.microco.sm{{ attachment.meta.links.0.href }}" alt="{{ attachment.file_name }}" title="{{ attachment.file_name }}"{% if comment_attachments.total > 5 %} style="width: 80px; height: auto;"{% endif %} />{% if comment_attachments.total > 5 %}</a>{% endif %}
+							{% if comment_attachments.total > 5 %}<a href="https://{{site.subdomain_key}}.microcosm.app{{ attachment.meta.links.0.href }}">{% endif %}<img src="https://{{site.subdomain_key}}.microcosm.app{{ attachment.meta.links.0.href }}" alt="{{ attachment.file_name }}" title="{{ attachment.file_name }}"{% if comment_attachments.total > 5 %} style="width: 80px; height: auto;"{% endif %} />{% if comment_attachments.total > 5 %}</a>{% endif %}
 						</li>
 						{% endif %}
 					{% endfor %}
