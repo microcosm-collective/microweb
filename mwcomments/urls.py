@@ -1,7 +1,7 @@
 from django.conf.urls import url
 from django.conf.urls import patterns
 
-from comments import views
+from mwcomments import views
 
 urlpatterns = patterns('',
     url(r'comments/create/$', views.create, name='create-comment'),
