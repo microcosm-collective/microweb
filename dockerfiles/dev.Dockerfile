@@ -35,4 +35,4 @@ RUN [ ! -f microweb/local_settings.py ] && echo "Missing config. Using default. 
 
 ENV PORT 80
 EXPOSE ${PORT}
-CMD python ./ENV/bin/gunicorn_django -b 0.0.0.0:${PORT}
+CMD python /usr/local/bin/gunicorn_django -b 0.0.0.0:${PORT}
