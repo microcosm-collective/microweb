@@ -18,8 +18,8 @@ RUN apt-get -qq update && \
 COPY requirements.txt /${APP_HOME}
 
 RUN python -m pip install --upgrade pip \
-	&& pip install virtualenv \
-	&& pip install -r requirements.txt
+    && pip install virtualenv \
+    && pip install -r requirements.txt
 
 COPY . /${APP_HOME}
 # RUN ./dependencies.sh
@@ -33,4 +33,4 @@ ADD https://www.lfgss.com/static/themes/1/css/bootstrap.min.css ${APP_HOME}core/
 
 ENV PORT=80
 EXPOSE ${PORT}
-CMD python /usr/local/bin/gunicorn_django -b 0.0.0.0:${PORT}
+CMD python /usr/local/bin/gunicorn microweb.wsgi -b 0.0.0.0:${PORT}
