@@ -6,7 +6,7 @@ python-dateutil==1.4
 pyga==2.5.0
 
 # Production server
-gunicorn==0.17.2
+gunicorn==19.10.0
 
 # Riemann client
 bernhard==0.1.1
