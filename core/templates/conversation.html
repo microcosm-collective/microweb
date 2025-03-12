@@ -55,7 +55,7 @@
 				<div class="comment-item-header">
 					<div class="comment-item-author">
 							{% if user %}
-								<img src="{% if 'gravatar' in user.avatar %}{{user.avatar}}{% elif 'files' in user.avatar %}https://{{site.subdomain_key}}.microco.sm{{user.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ user.profile_name | safe }}"/>
+								<img src="{% if 'gravatar' in user.avatar %}{{user.avatar}}{% elif 'files' in user.avatar %}https://{{site.subdomain_key}}.microcosm.app{{user.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ user.profile_name | safe }}"/>
 							{% else %}
 								<img src="/static/img/avatar.gif" />
 							{% endif %}
@@ -96,7 +96,7 @@
 			</h3>
 			<p class="metabar-module-author">
 				Posted by <a href="{% url 'single-profile' content.meta.created_by.id %}">
-					<img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in  content.meta.created_by.avatar  %}https://{{site.subdomain_key}}.microco.sm{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.meta.created_by.profile_name | safe }}" />
+					<img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in  content.meta.created_by.avatar  %}https://{{site.subdomain_key}}.microcosm.app{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.meta.created_by.profile_name | safe }}" />
 					@{{ content.meta.created_by.profile_name | safe | truncatechars:25 }}
 				</a> <time datetime="{{ content.meta.created|date:"c" }}"></time>
 			</p>

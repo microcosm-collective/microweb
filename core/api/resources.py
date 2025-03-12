@@ -109,7 +109,7 @@ def response_list_to_dict(responses):
         return response_dict
 
     for response in responses:
-        # If host contains more than two dots (e.g. *.*.microco.sm), response will be None.
+        # If host contains more than two dots (e.g. *.*.microcosm.app), response will be None.
         if response is not None:
             # Only follow one redirect. This is specifically to handle the /whoami
             # case where the client is redirected to /profiles/{id}
@@ -398,7 +398,7 @@ class Profile(object):
         url = build_url(host, [Profile.api_path_fragment, self.id])
 
         member = False
-        if hasattr(self, 'is_member'): 
+        if hasattr(self, 'is_member'):
             member = self.is_member
 
         payload = json.dumps([{'op': 'replace', 'path': '/member', 'value': member}])
@@ -1686,7 +1686,7 @@ class Event(APIResource):
 
         # Event location is optional
         if hasattr(self, 'where'): repr['where'] = self.where
-        
+
         # Geo coordinates are optional, even if 'where' is specified
         if hasattr(self, 'lat'): repr['lat'] = self.lat
         if hasattr(self, 'lon'): repr['lon'] = self.lon
@@ -2022,10 +2022,10 @@ class Ignored(object):
     @classmethod
     def from_api_response(cls, data):
         ignored = cls()
-        
+
         if data.get('ignored'):
             ignored = PaginatedList(data['ignored'], IgnoredItem)
-        
+
         return ignored
 
     @staticmethod
@@ -2082,10 +2082,10 @@ class Search(object):
         if data['query'].get('type'):
             for t in data['query']['type']:
                 search.type.append(t)
-        
+
         if data.get('timeTakenInMs'):
             search.time_elapsed = data['timeTakenInMs']/float(1000)
-        
+
         if data.get('results'):
             search.results = PaginatedList(data['results'], SearchResult)
 
@@ -2180,4 +2180,3 @@ class Legal(APIResource):
         url, params, headers = Microcosm.build_request(host, offset, access_token)
         resource = APIResource.retrieve(url, params, headers)
         return Legal.from_api_response(resource)
-

@@ -1,6 +1,6 @@
 # Microweb
 
-[Microco.sm](http://microco.sm) is a new forum SaaS product, founded by [Dee Kitchen](https://dee.kitchen) and [Matt Cottingham](https://twitter.com/mattrco).
+[Microco.sm](http://microcosm.app) is a new forum SaaS product, founded by [Dee Kitchen](https://dee.kitchen) and [Matt Cottingham](https://twitter.com/mattrco).
 
 Communities are already using Microco.sm as their forum software of choice, such as the [Espruino Forum](http://forum.espruino.com) and [LFGSS](https://www.lfgss.com).
 

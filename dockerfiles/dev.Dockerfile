@@ -7,10 +7,10 @@ WORKDIR ${APP_HOME}
 
 RUN apt-get -qq update && \
     apt-get -yq install --no-install-recommends \
-        build-essential \
-        libevent-dev \
-        libmemcached-dev \
-        zlib1g-dev && \
+    build-essential \
+    libevent-dev \
+    libmemcached-dev \
+    zlib1g-dev && \
     apt-get -yq --purge autoremove && \
     apt-get -q clean && \
     rm -rf /var/lib/apt/lists/*
@@ -29,7 +29,7 @@ COPY . /${APP_HOME}
 ADD https://www.lfgss.com/static/js/bootstrap.min.js ${APP_HOME}core/static/js/
 ADD https://www.lfgss.com/static/themes/1/css/bootstrap.min.css ${APP_HOME}core/static/themes/1/css
 
-RUN [ ! -f microweb/local_settings.py ] && echo "Missing config. Using default. Should be fine." && cp microweb/local_settings.py.sample microweb/local_settings.py
+# RUN cp microweb/local_settings.py.sample microweb/local_settings.py
 
 ENV PORT=80
 EXPOSE ${PORT}
