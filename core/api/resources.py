@@ -75,6 +75,10 @@ def get_subdomain_url(host):
         if resolved_name is None:
             resolved_name = Site.resolve_cname(host)
             mc.set(mc_key, resolved_name)
+
+        # TODO: this is a python3 migration thing, probably needs a deeper dig
+        if type(resolved_name) is bytes:
+            resolved_name = resolved_name.decode('utf-8')
         return settings.API_SCHEME + resolved_name
 
 
