@@ -75,6 +75,13 @@ def get_subdomain_url(host):
         if resolved_name is None:
             resolved_name = Site.resolve_cname(host)
             mc.set(mc_key, resolved_name)
+
+        # If we have a running memcached instance, python2 will store this
+        # as a python2 string which is equivalent to a python3 bytes.
+        # If we have python3 & old memcached content, then convert the bytes to a
+        # string so the subsequent concatenation doesn't crash!
+        if type(resolved_name) is bytes:
+            resolved_name = resolved_name.decode('utf-8')
         return settings.API_SCHEME + resolved_name
 
 
