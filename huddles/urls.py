@@ -3,7 +3,7 @@ from django.conf.urls import url
 from huddles import views
 
 
-urlpatterns = ['',
+urlpatterns = [
     # Huddles
     url(r'^huddles/$', views.list, name='list-huddle'),
     url(r'^huddles/create/$', views.create, name='create-huddle'),

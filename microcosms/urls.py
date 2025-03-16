@@ -3,7 +3,7 @@ from django.conf.urls import url
 from microcosms import views
 
 
-urlpatterns = ['',
+urlpatterns = [
 
     url(r'^$', views.root_microcosm, name='index'),
     url(r'^microcosms/$', views.root_microcosm, name='list-microcosms'),

@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from events import views
 
-urlpatterns = ['',
+urlpatterns = [
     # Events
     url(r'^microcosms/(?P<microcosm_id>\d+)/create/event/$', views.create, name='create-event'),
     url(r'^events/(?P<event_id>\d+)/$', views.single, name='single-event'),

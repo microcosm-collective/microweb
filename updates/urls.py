@@ -5,7 +5,7 @@ from updates.views import WatcherView
 from updates.views import UpdatePreferenceView
 
 
-urlpatterns = ['',
+urlpatterns = [
     # Updates
     url(r'^updates/$', UpdateView.list, name='list-updates'),
     url(r'^updates/settings/$', UpdatePreferenceView.settings, name='updates-settings'),
