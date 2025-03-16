@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from core.views import ErrorView
@@ -7,7 +7,7 @@ from microweb import settings
 
 # In the following, redirect.urls *MUST* remain the very last URL as it handles
 # all urls as potentially being a 404
-urlpatterns = patterns(
+urlpatterns = [
     "",
     url(r"", include("microcosms.urls")),
     url(r"", include("core.urls")),
@@ -23,7 +23,7 @@ urlpatterns = patterns(
     url(r"", include("moderation.urls")),
     url(r"", include("ignored.urls")),
     url(r"", include("redirect.urls")),
-)
+]
 
 # Serve static files with gunicorn if DEBUG is true.
 if settings.DEBUG:

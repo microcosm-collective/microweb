@@ -1,10 +1,9 @@
 from django.conf.urls import url
-from django.conf.urls import patterns
 
 from microcosms import views
 
 
-urlpatterns = patterns('',
+urlpatterns = ['',
 
     url(r'^$', views.root_microcosm, name='index'),
     url(r'^microcosms/$', views.root_microcosm, name='list-microcosms'),
@@ -22,4 +21,4 @@ urlpatterns = patterns('',
 
     # Proxy and batch requests to the backend
     url(r'^microcosms/(?P<microcosm_id>\d+)/memberships/api/$', views.members_api, name="api-memberships"),
-)
+]
