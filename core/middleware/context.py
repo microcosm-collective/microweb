@@ -31,7 +31,7 @@ class ContextMiddleware():
         request.whoami_url = ''
         request.view_requests = []
 
-        if request.COOKIES.has_key('access_token'):
+        if 'access_token' in request.COOKIES:
             # Clean up empty access token.
             if request.COOKIES['access_token'] == '':
                 response = HttpResponseRedirect('/')

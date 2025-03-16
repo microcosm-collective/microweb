@@ -26,7 +26,7 @@ TEST_ROOT = os.path.dirname(os.path.abspath(__file__))
 def generate_location():
     # Construct a random subdomain string
     subdomain = ''
-    for x in xrange(10):
+    for x in range(10):
         subdomain += random.choice(string.lowercase)
     return '%s.microcosm.app' % subdomain
 
