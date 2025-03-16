@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from mwcomments import views
 
-urlpatterns = ['',
+urlpatterns = [
     url(r'comments/create/$', views.create, name='create-comment'),
     url(r'comments/(?P<comment_id>\d+)/$', views.single, name='single-comment'),
     url(r'comments/(?P<comment_id>\d+)/edit/$', views.edit, name='edit-comment'),

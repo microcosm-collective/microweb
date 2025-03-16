@@ -2,6 +2,6 @@ from django.conf.urls import url
 
 from today import views
 
-urlpatterns = ['',
+urlpatterns = [
      url(r'^today/$', views.single, name='single-today'),
 ]

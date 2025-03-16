@@ -8,7 +8,6 @@ from microweb import settings
 # In the following, redirect.urls *MUST* remain the very last URL as it handles
 # all urls as potentially being a 404
 urlpatterns = [
-    "",
     url(r"", include("microcosms.urls")),
     url(r"", include("core.urls")),
     url(r"", include("conversations.urls")),

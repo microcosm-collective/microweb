@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from conversations import views
 
-urlpatterns = ['',
+urlpatterns = [
     url(r'^microcosms/(?P<microcosm_id>\d+)/create/conversation/$', views.create, name='create-conversation'),
     url(r'^conversations/(?P<conversation_id>\d+)/$' , views.single, name='single-conversation'),
     url(r'^conversations/(?P<conversation_id>\d+)/edit/$', views.edit, name='edit-conversation'),

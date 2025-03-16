@@ -6,9 +6,9 @@ from core.views import ErrorView
 from core.views import FaviconView
 from core.views import RobotsView
 from core.views import LegalView
+from core.views import echo_headers
 
-
-urlpatterns = ['',
+urlpatterns = [
 
     # Static
     url(r'^robots\.txt$', RobotsView.as_view()),
@@ -24,7 +24,7 @@ urlpatterns = ['',
     url(r'^about/(?P<doc_name>[a-z]+)/$', LegalView.single, name='single-legal'),
 
     # Echoes request headers
-    url(r'^headers/', 'core.views.echo_headers'),
+    url(r'^headers/', echo_headers),
 
     # Break things
     url(r'error/', ErrorView.server_error),
