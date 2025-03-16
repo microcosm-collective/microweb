@@ -9,7 +9,7 @@ class CorsMiddleware():
     # return 204;
 
     def process_response(self, request, response):
-        if response['Content-Type'] == 'text/html; charset=utf-8':
+        if response.get('Content-Type') == 'text/html; charset=utf-8':
             if request.method == 'GET':
                 response['Access-Control-Allow-Origin'] = '*'
                 response['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
