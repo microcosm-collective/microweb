@@ -1,9 +1,8 @@
 from django.conf.urls import url
-from django.conf.urls import patterns
 
 from events import views
 
-urlpatterns = patterns('',
+urlpatterns = ['',
     # Events
     url(r'^microcosms/(?P<microcosm_id>\d+)/create/event/$', views.create, name='create-event'),
     url(r'^events/(?P<event_id>\d+)/$', views.single, name='single-event'),
@@ -16,4 +15,4 @@ urlpatterns = patterns('',
 
     # Proxy geocoding requests to the backend
     url(r'^geocode/$', views.geocode, name='geocode'),
-)
+]

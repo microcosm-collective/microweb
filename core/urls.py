@@ -1,5 +1,4 @@
 from django.conf.urls import url
-from django.conf.urls import patterns
 
 from core.views import AuthenticationView
 from core.views import Auth0View
@@ -9,7 +8,7 @@ from core.views import RobotsView
 from core.views import LegalView
 
 
-urlpatterns = patterns('',
+urlpatterns = ['',
 
     # Static
     url(r'^robots\.txt$', RobotsView.as_view()),
@@ -31,4 +30,4 @@ urlpatterns = patterns('',
     url(r'error/', ErrorView.server_error),
     url(r'notfound/', ErrorView.not_found),
     url(r'forbidden/', ErrorView.forbidden),
-)
+]
