@@ -102,7 +102,7 @@ def ignore(request):
         )
 
     if response.status_code != requests.codes.ok:
-        print 'ignore: ' + response.text
+        print('ignore: ' + response.text)
         return HttpResponseBadRequest()
 
     return HttpResponseRedirect(reverse('list-ignored'))

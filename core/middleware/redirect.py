@@ -45,13 +45,13 @@ class DomainRedirectMiddleware():
                         self.mc.set(host, site, time=300)
                     except memcache.Error as e:
                         logger.error('Memcached SET error: %s' % str(e))
-                except APIException, e:
+                except APIException as e:
                     # HTTP 400 indicates a non-existent site.
                     if e.status_code == 404:
                         return HttpResponseRedirect('http://microcosm.app')
                     logger.error('APIException: %s' % e.message)
                     return HttpResponseRedirect(reverse('server-error'))
-                except RequestException, e:
+                except RequestException as e:
                     logger.error('RequestException: %s' % e.message)
                     return HttpResponseRedirect(reverse('server-error'))
 

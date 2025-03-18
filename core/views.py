@@ -7,10 +7,10 @@ import random
 
 from requests import RequestException
 
-from urllib import urlencode
-from urlparse import urlparse
-from urlparse import parse_qs
-from urlparse import urlunparse
+from urllib.parse import urlencode
+from urllib.parse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import urlunparse
 
 from functools import wraps
 
@@ -149,7 +149,7 @@ def process_attachments(request, comment):
             Attachment.delete(request.get_host(), Comment.api_path_fragment, comment.id, fileHash)
 
     # Check if any files have been uploaded with the request.
-    if request.FILES.has_key('attachments'):
+    if 'attachments' in request.FILES:
         for f in request.FILES.getlist('attachments'):
             file_request = FileMetadata.from_create_form(f)
             # Maximum file size is 30 MB.
@@ -188,7 +188,7 @@ def build_newest_comment_link(response, request=None):
 
     # queries is a dictionary of 1-item lists (as we don't re-use keys in our query string)
     # urlencode will encode the lists into the url (offset=[25]) etc.  So get the values straight.
-    for (key, value) in queries.items():
+    for (key, value) in list(queries.items()):
         queries[key] = value[0]
 
     # preserve utm tracking from original request
@@ -252,7 +252,7 @@ class ErrorView(object):
         view_data = {}
         view_requests = []
 
-        if request.COOKIES.has_key('access_token'):
+        if 'access_token' in request.COOKIES:
             request.access_token = request.COOKIES['access_token']
             whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
             view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
@@ -276,7 +276,7 @@ class ErrorView(object):
         view_data = {}
         view_requests = []
 
-        if request.COOKIES.has_key('access_token'):
+        if 'access_token' in request.COOKIES:
             request.access_token = request.COOKIES['access_token']
             whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
             view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
@@ -391,7 +391,7 @@ class AuthenticationView(object):
         """
 
         response = redirect('/')
-        if request.COOKIES.has_key('access_token'):
+        if 'access_token' in request.COOKIES:
             response.set_cookie('access_token', '', expires="Thu, 01 Jan 1970 00:00:00 GMT")
             url = build_url(request.get_host(), ['auth', request.access_token])
             try:
@@ -458,7 +458,7 @@ class Auth0View(object):
 
 def echo_headers(request):
     view_data = '<html><body><table>'
-    for key in request.META.keys():
+    for key in list(request.META.keys()):
         view_data += '<tr><td>%s</td><td>%s</td></tr>' % (key, request.META[key])
     view_data += '</table></body></html>'
     return HttpResponse(view_data, content_type='text/html')
