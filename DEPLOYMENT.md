@@ -85,28 +85,38 @@ Create the app on the server:
 dokku apps:create microweb
 ```
 
+and link it to the memcached app:
+
+```bash
+dokku memcached:link microweb-memcached microweb
+```
+
 Push to the app from your local git repository:
 
 ```bash
 git remote add dokku dokku@lfgssdemo:microweb
 git push dokku main
 # nb. if you're pushing a wip branch!
-git push dokku madwort/working-docker:main
+git push dokku HEAD:main
 ```
 
 Configure some things on the server:
 
 ```bash
-dokku ports:add microweb http:80:5000
+# serve on port 9000 for consistency with previous servers
+dokku ports:add microweb http:9000:5000
+
+dokku domains:add microweb *.microcosm.app
+# if you need to access the server directly for testing, also add explicit lfgss domains
 dokku domains:add microweb lfgss.com
 dokku domains:add microweb www.lfgss.com
-dokku domains:add microweb *.microcosm.app
 
 dokku config:set --no-restart microweb DJANGO_SETTINGS_MODULE=microweb.settings
 dokku config:set --no-restart microweb PYTHONPATH=.
 dokku config:set --no-restart microweb MEMCACHE_HOST=dokku-memcached-microweb-memcached
 dokku config:set --no-restart microweb CLIENT_SECRET=123456
-dokku config:set --no-restart microweb SECRET_KEY=aoeui12345
+# use single quotes if you have special chars!
+dokku config:set --no-restart microweb SECRET_KEY='!aoeui12345'
 ```
 
 Add some CloudFlare / nginx configuration for the app
