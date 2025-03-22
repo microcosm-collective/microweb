@@ -18,12 +18,22 @@ The server needs an ip address on the internal network. This address should be a
 ```bash
 # ssh
 sudo ufw allow 2020
+
 # python server
-sudo ufw allow 9000
-# optional alias for python server
-sudo ufw allow 80
+# from api
+sudo ufw allow from 192.168.165.21 to any port 9000
+# from lb
+sudo ufw allow from 192.168.207.198 to any port 9000
+
 # prometheus-node-exporter
-sudo ufw allow 9100
+# from api
+sudo ufw allow from 192.168.165.21 to any port 9100
+# from lb
+sudo ufw allow from 192.168.207.198 to any port 9100
+
+# optional dev alias for python server
+sudo ufw allow 80
+
 sudo ufw enable
 ```
 
