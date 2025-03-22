@@ -4,8 +4,8 @@ from django.conf import settings
 
 import requests
 
-from urlparse import urlparse
-from urlparse import urlunparse
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 from dateutil.parser import parse as parse_timestamp
 
@@ -75,6 +75,13 @@ def get_subdomain_url(host):
         if resolved_name is None:
             resolved_name = Site.resolve_cname(host)
             mc.set(mc_key, resolved_name)
+
+        # If we have a running memcached instance, python2 will store this
+        # as a python2 string which is equivalent to a python3 bytes.
+        # If we have python3 & old memcached content, then convert the bytes to a
+        # string so the subsequent concatenation doesn't crash!
+        if type(resolved_name) is bytes:
+            resolved_name = resolved_name.decode('utf-8')
         return settings.API_SCHEME + resolved_name
 
 
@@ -145,7 +152,7 @@ def api_url_to_gui_url(api_url):
     # API paths are resources, GUI paths are directories
     # Add trailing slash if missing
     if gui_url.path[-1:] != '/':
-        return urlunparse((gui_url[0],gui_url[1],gui_url[2] + u'/',gui_url[3],gui_url[4],gui_url[5]))
+        return urlunparse((gui_url[0],gui_url[1],gui_url[2] + '/',gui_url[3],gui_url[4],gui_url[5]))
 
     return urlunparse(gui_url)
 
@@ -240,9 +247,6 @@ class Site(object):
         self.domain = data['domain']
         self.owned_by = Profile(data['ownedBy'])
         self.meta = Meta(data['meta'])
-
-        # Custom tracking is optional
-        if data.get('gaWebPropertyId'): self.ga_web_property_id = data['gaWebPropertyId']
 
         # Site themes are optional
         self.logo_url = data['logoUrl']
@@ -1995,7 +1999,7 @@ class Attachment(object):
         elif comment_id:
             url = build_url(host, ['comments', comment_id, 'attachments'])
         else:
-            raise AssertionError, 'You must supply a profile_id or comment_id to attach to'
+            raise AssertionError('You must supply a profile_id or comment_id to attach to')
 
         attachment = {'FileHash': file_hash, 'FileName': file_name}
         headers = APIResource.make_request_headers(access_token)

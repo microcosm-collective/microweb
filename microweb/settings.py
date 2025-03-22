@@ -57,16 +57,20 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-)
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.core.context_processors.request',
-    'django.core.context_processors.static',
-)
-TEMPLATE_DIRS = ()
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.template.context_processors.static',
+            ]
+        },
+    },
+]
+
 
 MIDDLEWARE_CLASSES = (
     # Note: if using messages, enable the sessions middleware too
@@ -103,46 +107,46 @@ ROOT_URLCONF = 'microweb.urls'
 WSGI_APPLICATION = 'microweb.wsgi.application'
 
 INSTALLED_APPS = (
-    'django.contrib.contenttypes',
-    'django.contrib.humanize',
-    'django.contrib.staticfiles',
-    'core',
-    'conversations',
-    'events',
-    'microcosms',
-    'huddles',
-    'comments',
-    'profiles',
-    'updates',
-    'search',
-    'trending',
-    'moderation',
-    'redirect',
-    'gunicorn',
-    'core.templatetags.comments',
-    'core.templatetags.conversation',
-    'core.templatetags.event',
-    'core.templatetags.commentBox',
-    'core.templatetags.profile',
-    'core.templatetags.microcosm',
-    'core.templatetags.list_comment',
-    'core.templatetags.get_attachment',
-    'core.templatetags.huddle',
-    'core.templatetags.is_image',
+    "django.contrib.contenttypes",
+    "django.contrib.humanize",
+    "django.contrib.staticfiles",
+    "core",
+    "conversations",
+    "events",
+    "microcosms",
+    "huddles",
+    "mwcomments",
+    "profiles",
+    "updates",
+    "search",
+    "trending",
+    "moderation",
+    "redirect",
+    "gunicorn",
+    "core.templatetags.comments",
+    "core.templatetags.conversation",
+    "core.templatetags.event",
+    "core.templatetags.commentBox",
+    "core.templatetags.profile",
+    "core.templatetags.microcosm",
+    "core.templatetags.list_comment",
+    "core.templatetags.get_attachment",
+    "core.templatetags.huddle",
+    "core.templatetags.is_image",
 )
 
 # The values below in must be initialised in local_settings.py
 # Example values can be found in local_settings.py.example
 
 # Credentials generated when registering an application.
-from local_settings import CLIENT_ID
-from local_settings import CLIENT_SECRET
+from .local_settings import CLIENT_ID
+from .local_settings import CLIENT_SECRET
 
 # Microcosm API settings.
-from local_settings import API_SCHEME
-from local_settings import API_DOMAIN_NAME
-from local_settings import API_PATH
-from local_settings import API_VERSION
+from .local_settings import API_SCHEME
+from .local_settings import API_DOMAIN_NAME
+from .local_settings import API_PATH
+from .local_settings import API_VERSION
 
 if API_SCHEME == '' or API_DOMAIN_NAME == '' or API_PATH == '' or API_VERSION == '':
     raise Exception('Please define API settings in local_settings.py')
