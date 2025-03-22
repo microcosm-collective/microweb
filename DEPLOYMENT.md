@@ -70,6 +70,21 @@ sudo su - madwort
 ssh-import-id gh:madwort
 ```
 
+### Create a user for the docker app
+
+So that we don't have to run the docker app as root, create a user for it:
+
+```bash
+sudo useradd -Ms /bin/bash -u1100 microweb
+```
+
+The uid should match the one in the Dockerfile, which currently looks like:
+
+```
+RUN useradd -Ms /bin/bash -u1100 microweb
+USER microweb
+```
+
 ## Install Dokku
 
 based on https://dokku.com/docs/getting-started/installation/
