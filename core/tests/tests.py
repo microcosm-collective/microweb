@@ -2,7 +2,7 @@ import random
 import json
 import os
 
-from django.utils import unittest
+import unittest
 from django.conf import settings
 from django.test.client import RequestFactory
 
