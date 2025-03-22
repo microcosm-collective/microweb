@@ -207,8 +207,10 @@ Then attach to the load balancer, by editing `/etc/nginx/nginx.conf` on the lb s
 And maybe check the logs for errors as the requests roll in!
 
 ```bash
-# check the logs
+# check the application logs
 dokku logs microweb
+# check the nginx logs
+tail /var/log/nginx/microweb-error.log
 ```
 
 If you need to restart memcached, you can use:
