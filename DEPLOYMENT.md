@@ -104,10 +104,10 @@ dokku memcached:link microweb-memcached microweb
 Push to the app from your local git repository:
 
 ```bash
-git remote add dokku dokku@lfgssdemo:microweb
-git push dokku main
+git remote add wpy03 dokku@lfgssdemo:microweb
+git push wpy03 main
 # nb. if you're pushing a wip branch!
-git push dokku HEAD:main
+git push wpy03 HEAD:main
 ```
 
 Configure some things on the server:
