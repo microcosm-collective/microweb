@@ -144,6 +144,18 @@ dokku config:set --no-restart microweb CLIENT_SECRET=123456
 dokku config:set --no-restart microweb SECRET_KEY='!aoeui12345'
 ```
 
+Add some nginx config:
+
+```bash
+dokku nginx:set microweb proxy-connect-timeout 90s
+dokku nginx:set microweb proxy-send-timeout 90s
+dokku nginx:set microweb proxy-read-timeout 90s
+dokku nginx:set microweb proxy-buffers "32 4k"
+dokku nginx:set microweb client-max-body-size 30m
+# need to run a rebuild for this config to take effect
+dokku ps:rebuild microweb
+```
+
 Add some CloudFlare / nginx configuration for the app
 
 ```bash
