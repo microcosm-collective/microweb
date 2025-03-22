@@ -5,6 +5,47 @@
 * make a server (on Linode)
   * needs at least 2GB RAM for the build step or it crashes out (with code 137 - OOM)
 
+### Internal ip address
+
+The server needs an ip address on the internal network. This address should be added to `/etc/hosts` on other relevant servers (e.g. lb/api), e.g.:
+
+```
+192.168.0.11 wpy03.microcosm.cc
+```
+
+### Enable firewall
+
+```bash
+# ssh
+sudo ufw allow 2020
+# python server
+sudo ufw allow 9000
+# optional alias for python server
+sudo ufw allow 80
+# prometheus-node-exporter
+sudo ufw allow 9100
+sudo ufw enable
+```
+
+### Enable prometheus
+
+```bash
+sudo apt install prometheus-node-exporter
+```
+
+and configure by editing `/etc/prometheus/prometheus.yml` on the api server like this:
+
+```yaml
+...
+  - job_name: node
+    # If prometheus-node-exporter is installed, grab stats about the local
+    # machine by default.
+    static_configs:
+    - targets: ['api.microcosm.cc:9100','wpy01.microcosm.cc:9100','wpy02.microcosm.cc:9100','wpy03.microcosm.cc:9100']
+...
+```
+
+
 ## Create users
 
 Create all users as appropriate, e.g.
@@ -113,6 +154,8 @@ Finally restart the app on the server to pick up all the changes:
 # restart
 dokku ps:restart microweb
 ```
+
+Then attach to the load balancer, by editing `/etc/nginx/nginx.conf` on the lb server.
 
 And maybe check the logs for errors as the requests roll in!
 
