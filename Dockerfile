@@ -27,6 +27,12 @@ RUN cp microweb/local_settings.py.production microweb/local_settings.py
 
 # add dummy user
 RUN useradd -Ms /bin/bash -u1100 microweb
+
+RUN mkdir -p /srv/www/django/static/
+RUN python manage.py collectstatic
+RUN chown -R microweb:microweb /srv/www/django/static/
+
+# switch to the unprivileged user to run gunicorn
 USER microweb
 
 ENV PORT=80
