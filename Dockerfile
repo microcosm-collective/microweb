@@ -29,7 +29,14 @@ RUN cp microweb/local_settings.py.production microweb/local_settings.py
 RUN useradd -Ms /bin/bash -u1100 microweb
 
 RUN mkdir -p /srv/www/django/static/
-RUN python manage.py collectstatic
+# The correct thing to do is run collectstatic like this:
+# RUN python manage.py collectstatic --pythonpath=. --settings=microweb.settings
+# However for some reason the staticfiles module is not loading at this point
+# (You can see this by running `python manage.py help` here & inspecting the list).
+# Connecting to the container later collectstatic runs fine, however if the files
+# aren't in place before gunicorn starts, it won't recognise them & you'll get 404s!
+# So let's do our own hacky collectstatic like so:
+COPY ./core/static/ /srv/www/django/static/
 RUN chown -R microweb:microweb /srv/www/django/static/
 
 # switch to the unprivileged user to run gunicorn
