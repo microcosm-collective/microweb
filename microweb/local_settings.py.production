@@ -15,6 +15,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', '')
 DEBUG = False
 TEMPLATE_DEBUG = False
 
+# Absolute path to the directory static files should be collected to.
+# In production with Docker these are served by whitenoise.
+STATIC_ROOT = '/srv/www/django/static/'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

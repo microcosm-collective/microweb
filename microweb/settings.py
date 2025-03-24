@@ -46,7 +46,7 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 
 # Absolute path to the directory static files should be collected to.
-# In production these are served by nginx.
+# In production these are served by ~~nginx~~ or maybe whitenoise.
 STATIC_ROOT = '/srv/www/django/microweb/static/'
 
 # URL prefix for static files.
@@ -169,3 +169,6 @@ from microweb.local_settings import SECRET_KEY
 # Allows shadowing of DEBUG for development.
 from microweb.local_settings import DEBUG
 from microweb.local_settings import TEMPLATE_DEBUG
+
+# Allow override of STATIC_ROOT for production
+from microweb.local_settings import STATIC_ROOT
