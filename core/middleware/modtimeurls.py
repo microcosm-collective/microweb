@@ -76,7 +76,7 @@ class ModTimeUrlsMiddleware:
 
         index = filename.rfind('?')
         contains_question_mark = index != -1
-        
+
         if contains_question_mark:
             if filename[index:].find("_=") != -1: # url already has a _=, skip it
                 return url
@@ -113,7 +113,7 @@ class ModTimeUrlsMiddleware:
 
             return before + '"' + self.append_modtime_to_url(url) + '"' + after
 
-        if 'text/html' in response['content-type'].lower():
+        if 'text/html' in response.get('content-type').lower():
             response.content = link_matcher.sub(replace_urls, response.content)
 
         return response

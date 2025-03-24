@@ -22,14 +22,12 @@ RUN python -m pip install --upgrade pip \
     && pip install -r requirements.txt
 
 COPY . /${APP_HOME}
-# RUN ./dependencies.sh
 
-# These two files are necessary to render the site properly, but they are
-# not included in the repo due to .gitignore exclusions:
-ADD https://www.lfgss.com/static/js/bootstrap.min.js ${APP_HOME}core/static/js/
-ADD https://www.lfgss.com/static/themes/1/css/bootstrap.min.css ${APP_HOME}core/static/themes/1/css
+RUN cp microweb/local_settings.py.production microweb/local_settings.py
 
-# RUN cp microweb/local_settings.py.sample microweb/local_settings.py
+# add dummy user
+RUN useradd -Ms /bin/bash -u1100 microweb
+USER microweb
 
 ENV PORT=80
 EXPOSE ${PORT}
