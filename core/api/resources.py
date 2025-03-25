@@ -241,9 +241,6 @@ class Site(object):
         self.owned_by = Profile(data['ownedBy'])
         self.meta = Meta(data['meta'])
 
-        # Custom tracking is optional
-        if data.get('gaWebPropertyId'): self.ga_web_property_id = data['gaWebPropertyId']
-
         # Site themes are optional
         self.logo_url = data['logoUrl']
         self.theme_id = data['themeId']
