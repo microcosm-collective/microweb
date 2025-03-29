@@ -152,6 +152,8 @@ dokku nginx:set microweb proxy-send-timeout 90s
 dokku nginx:set microweb proxy-read-timeout 90s
 dokku nginx:set microweb proxy-buffers "32 4k"
 dokku nginx:set microweb client-max-body-size 30m
+# nb. if forwarded-proto is set to $scheme, gunicorn sees http
+dokku nginx:set microweb x-forwarded-proto-value https
 # need to run a rebuild for this config to take effect
 dokku ps:rebuild microweb
 ```
