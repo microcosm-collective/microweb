@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -293,7 +294,7 @@
 
 		<script src="{{ STATIC_URL }}3rd/jquery/1.10.2/jquery.min.js"></script>
 		<script src="{{ STATIC_URL }}3rd/moment.js/2.10.6/moment.min.js"></script>
-		<script src="{{ STATIC_URL }}3rd/prettify/r298/prettify.js"></script>
+		<script src="{% static "3rd/prettify/r298/prettify.js" %}"></script>
 		<script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
 		<script src="{{ STATIC_URL }}js/base.js"></script>
 		<script src="{{ STATIC_URL }}js/metabar.js?v=20160619"></script>
