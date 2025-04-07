@@ -202,7 +202,7 @@ def build_newest_comment_link(response, request=None):
     return response
 
 
-class LegalView(object):
+class LegalView:
     list_template = 'legals.html'
     single_template = 'legal.html'
 
@@ -246,7 +246,7 @@ class LegalView(object):
         return render(request, LegalView.single_template, view_data)
 
 
-class ErrorView(object):
+class ErrorView:
     @staticmethod
     def not_found(request):
         view_data = {}
@@ -338,7 +338,7 @@ class ErrorView(object):
         context = RequestContext(request, view_data)
         return HttpResponseForbidden(loader.get_template('403.html').render(context))
 
-class AuthenticationView(object):
+class AuthenticationView:
 
     @staticmethod
     @csrf_exempt
@@ -401,7 +401,7 @@ class AuthenticationView(object):
 
         return response
 
-class Auth0View(object):
+class Auth0View:
 
     @staticmethod
     @csrf_exempt
@@ -459,7 +459,7 @@ class Auth0View(object):
 def echo_headers(request):
     view_data = '<html><body><table>'
     for key in list(request.META.keys()):
-        view_data += '<tr><td>%s</td><td>%s</td></tr>' % (key, request.META[key])
+        view_data += f'<tr><td>{key}</td><td>{request.META[key]}</td></tr>'
     view_data += '</table></body></html>'
     return HttpResponse(view_data, content_type='text/html')
 
@@ -474,4 +474,4 @@ class RobotsView(TemplateView):
     content_type = 'text/plain'
 
     def get_context_data(self, **kwargs):
-        return super(RobotsView, self).get_context_data(**kwargs)
+        return super().get_context_data(**kwargs)

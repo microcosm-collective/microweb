@@ -5,7 +5,7 @@ register = template.Library()
 @register.inclusion_tag('block_comments.html', takes_context=True)
 def comments(context, comments, **kwargs):
 
-    if not isinstance(comments, collections.Iterable):
+    if not isinstance(comments, collections.abc.Iterable):
         comments = [comments]
 
     context['comments'] = comments

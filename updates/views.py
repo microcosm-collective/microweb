@@ -31,7 +31,7 @@ from core.views import require_authentication
 logger = logging.getLogger('updates.views')
 
 
-class UpdateView(object):
+class UpdateView:
     list_template = 'updates.html'
 
     @staticmethod
@@ -83,7 +83,7 @@ class UpdateView(object):
         return HttpResponseRedirect(reverse('list-updates'))
 
 
-class WatcherView(object):
+class WatcherView:
     list_template = 'watchers.html'
 
     @staticmethod
@@ -160,7 +160,7 @@ class WatcherView(object):
             return HttpResponse(responsedata, content_type='application/json')
 
 
-class UpdatePreferenceView(object):
+class UpdatePreferenceView:
     list_template = 'forms/update_settings.html'
 
     @staticmethod

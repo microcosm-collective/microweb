@@ -157,7 +157,7 @@ def api_url_to_gui_url(api_url):
     return urlunparse(gui_url)
 
 
-class APIResource(object):
+class APIResource:
     """
     Base API resource that performs HTTP operations. Each API class should subclass this
     to deal with custom validation and JSON processing.
@@ -231,7 +231,7 @@ class APIResource(object):
             raise APIException(resource['error'], response.status_code)
 
 
-class Site(object):
+class Site:
     """
     Represents the current site (title, logo, etc.).
     """
@@ -294,7 +294,7 @@ class Site(object):
         return response.content
 
 
-class User(object):
+class User:
     """
     User API resource. A user is only defined once across the platform
     (and is thus multi-site). A Profile is site specific, and associates
@@ -313,7 +313,7 @@ class User(object):
         return User(resource)
 
 
-class WhoAmI(object):
+class WhoAmI:
     """
     WhoAmI returns the profile of the currently logged-in user.
     """
@@ -334,7 +334,7 @@ class WhoAmI(object):
         return Profile(resource)
 
 
-class Redirect(object):
+class Redirect:
     """
     Proxy a redirect request to the API.
     """
@@ -349,7 +349,7 @@ class Redirect(object):
         return APIResource.retrieve(request_url, params=params, headers=headers)
 
 
-class Profile(object):
+class Profile:
     """
     Represents a user profile belonging to a specific site.
     """
@@ -458,7 +458,7 @@ class Profile(object):
         requests.put(url, payload, headers=headers)
 
 
-class ProfileList(object):
+class ProfileList:
     """
     Represents a list of profiles for a given site.
     """
@@ -589,7 +589,7 @@ class Microcosm(APIResource):
         return repr
 
 
-class MicrocosmList(object):
+class MicrocosmList:
     """
     Represents a list of microcosms for a given site.
     """
@@ -623,7 +623,7 @@ class MicrocosmList(object):
         return MicrocosmList(resource)
 
 
-class RoleList(object):
+class RoleList:
     """
     Represents a list of security roles for a given site (default roles) or
     microcosm (custom roles)
@@ -760,7 +760,7 @@ class RoleProfile(APIResource):
         headers['Content-Type'] = 'application/json'
         return requests.delete(url, data='[]', headers=headers)
 
-class RoleProfileList(object):
+class RoleProfileList:
     """
     Represents a list of profiles on a given role.
     """
@@ -866,7 +866,7 @@ class RoleCriteria(APIResource):
         headers['Content-Type'] = 'application/json'
         return requests.delete(url, data='[]', headers=headers)
 
-class RoleCriteriaList(object):
+class RoleCriteriaList:
     """
     Represents a list of criteria on a given role.
     """
@@ -899,7 +899,7 @@ class RoleCriteriaList(object):
         resource = APIResource.retrieve(url, params, headers)
         return RoleCriteriaList(resource)
 
-class Item(object):
+class Item:
     """
     Represents an item contained within a microcosm. Only used when
     fetching a single microcosm to represent the list of items
@@ -937,7 +937,7 @@ class Item(object):
         return item
 
 
-class PaginatedList(object):
+class PaginatedList:
     """
     Generic list of items and pagination metadata (total, number of pages, etc.).
     """
@@ -965,7 +965,7 @@ class PaginatedList(object):
                     self.links[item['rel']] = {'href': item['href']}
 
 
-class Breadcrumb(object):
+class Breadcrumb:
     """
     List of links that describe the ancestor microcosms
     """
@@ -977,7 +977,7 @@ class Breadcrumb(object):
             if 'title' in item: crumb['title'] = item['title']
             self.breadcrumb[item['rel'] + str(item['level'])] = crumb
 
-class ChildLinks(object):
+class ChildLinks:
     """
     List of links that describe children microcosms (or other items in the future)
     """
@@ -992,7 +992,7 @@ class ChildLinks(object):
             self.children[item['rel'] + str(seq)] = link
             seq = seq + 1
 
-class Meta(object):
+class Meta:
     """
     Represents a resource 'meta' type, including creation time/user,
     flags, links, and permissions.
@@ -1026,7 +1026,7 @@ class Meta(object):
                     self.stats[stat['metric']] = stat['value']
 
 
-class PermissionSet(object):
+class PermissionSet:
     """
     Represents user permissions on a resource.
     """
@@ -1063,7 +1063,7 @@ class Watcher(APIResource):
         if data.get('item'):
             if data.get('itemType') == "conversation":
                 self.item = Conversation.from_summary(data['item'])
-                self.item_link = '/%s/%s/newest/' % (RESOURCE_PLURAL[data.get('itemType')], self.item_id)
+                self.item_link = '/{}/{}/newest/'.format(RESOURCE_PLURAL[data.get('itemType')], self.item_id)
 
                 if data['item'].get('lastCommentCreated'):
                     self.item.last_comment_created = parse_timestamp(data['item']['lastCommentCreated'])
@@ -1072,7 +1072,7 @@ class Watcher(APIResource):
 
             elif data.get('itemType') == "event":
                 self.item = Event.from_summary(data['item'])
-                self.item_link = '/%s/%s/newest' % (RESOURCE_PLURAL[data.get('itemType')], self.item_id)
+                self.item_link = '/{}/{}/newest'.format(RESOURCE_PLURAL[data.get('itemType')], self.item_id)
 
                 if data['item'].get('lastCommentCreated'):
                     self.item.last_comment_created = parse_timestamp(data['item']['lastCommentCreated'])
@@ -1081,7 +1081,7 @@ class Watcher(APIResource):
 
             elif data.get('itemType') == "microcosm":
                 self.item = Microcosm.from_summary(data['item'])
-                self.item_link = '/%s/%s' % (RESOURCE_PLURAL[data.get('itemType')], self.item_id)
+                self.item_link = '/{}/{}'.format(RESOURCE_PLURAL[data.get('itemType')], self.item_id)
 
                 if data['item'].get('mostRecentUpdate'):
                     self.item.last_comment_created = parse_timestamp(data['item']['mostRecentUpdate']['item']['meta']['created'])
@@ -1089,7 +1089,7 @@ class Watcher(APIResource):
                     self.item.last_comment_created = parse_timestamp(data['item']['meta']['created'])
 
             else:
-                self.item_link = '/%s/%s' % (RESOURCE_PLURAL[data.get('itemType')], self.item_id)
+                self.item_link = '/{}/{}'.format(RESOURCE_PLURAL[data.get('itemType')], self.item_id)
 
     @classmethod
     def from_summary(cls, data):
@@ -1119,7 +1119,7 @@ class Watcher(APIResource):
         return response.content
 
 
-class WatcherList(object):
+class WatcherList:
     """
     List of a user's watchers.
     """
@@ -1143,7 +1143,7 @@ class WatcherList(object):
         return WatcherList(resource)
 
 
-class UpdateList(object):
+class UpdateList:
     """
     A list of user updates.
     """
@@ -1191,7 +1191,7 @@ class Update(APIResource):
         else:
             update.parent_item = update.item
 
-        update.item_link = '/%s/%s' % (RESOURCE_PLURAL[update.item_type], update.item.id)
+        update.item_link = f'/{RESOURCE_PLURAL[update.item_type]}/{update.item.id}'
 
         if update.update_type == 'new_comment':
             update.parent_link = update.parent_item.meta.links['self']['href']
@@ -1535,7 +1535,7 @@ class Huddle(APIResource):
         resource = APIResource.update(url, json.dumps(payload), {}, APIResource.make_request_headers(access_token))
         return Huddle.from_api_response(resource)
 
-class HuddleList(object):
+class HuddleList:
     """
     Represents a list of microcosms for a given site.
     """
@@ -1767,7 +1767,7 @@ class Event(APIResource):
         return requests.put(url, data=json.JSONEncoder().encode(attendance_data), headers=headers, allow_redirects=False)
 
 
-class AttendeeList(object):
+class AttendeeList:
     """
     Represents a paginated list of event attendees.
     """
@@ -1777,7 +1777,7 @@ class AttendeeList(object):
         self.meta = Meta(data['meta'])
 
 
-class Attendee(object):
+class Attendee:
 
     @classmethod
     def from_summary(cls, data):
@@ -1900,7 +1900,7 @@ class Comment(APIResource):
         return response.content
 
 
-class GeoCode(object):
+class GeoCode:
     """
     Used for proxying geocode requests to the backend.
     """
@@ -1916,7 +1916,7 @@ class GeoCode(object):
         return response.content
 
 
-class FileMetadata(object):
+class FileMetadata:
     """
     For managing user-uploaded files.
     TODO: manage multiple uploads
@@ -1949,7 +1949,7 @@ class FileMetadata(object):
         return FileMetadata.from_api_response(response)
 
 
-class Attachment(object):
+class Attachment:
     """
     Represents the relation between a file and a profile or comment.
     TODO: parse attachment list in response (currently create only signals
@@ -2016,7 +2016,7 @@ class Attachment(object):
         url = build_url(host, [ type, id, Attachment.api_path_fragment, fileHash ])
         APIResource.delete(url, {}, APIResource.make_request_headers(access_token))
 
-class Ignored(object):
+class Ignored:
     """
     List of items that a person has ignored (is hiding).
     """
@@ -2054,7 +2054,7 @@ class Ignored(object):
         return requests.delete(url, data=json.dumps(data), headers=headers)
 
 
-class IgnoredItem(object):
+class IgnoredItem:
     """
     The search result object
     """
@@ -2070,7 +2070,7 @@ class IgnoredItem(object):
     def from_summary(cls, data):
         return IgnoredItem.from_api_response(data)
 
-class Search(object):
+class Search:
     """
     Used for searching and search results
     """
@@ -2102,7 +2102,7 @@ class Search(object):
         return url, params, headers
 
 
-class SearchResult(object):
+class SearchResult:
     """
     The search result object
     """

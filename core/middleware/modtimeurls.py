@@ -51,7 +51,7 @@ import pylibmc as memcache
 url_attributes = ['src', 'href']
 
 # stop matching when we hit <, > or " to guard against erratic markup
-link_matcher = re.compile('((?:%s)="(?:%s)[^<>"]*")' % ("|".join(url_attributes), re.escape(settings.STATIC_URL)))
+link_matcher = re.compile('((?:{})="(?:{})[^<>"]*")'.format("|".join(url_attributes), re.escape(settings.STATIC_URL)))
 
 class ModTimeUrlsMiddleware:
     """Middleware for adding modtime GET parameter to each media URL in responses."""

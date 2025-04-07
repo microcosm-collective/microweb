@@ -7,7 +7,7 @@ import unittest
 from django.conf import settings
 from django.test.client import RequestFactory
 
-from mock import patch
+from unittest.mock import patch
 
 from core.views import build_pagination_links
 from core.views import build_newest_comment_link
