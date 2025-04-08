@@ -73,6 +73,9 @@ TEMPLATES = [
 
 
 MIDDLEWARE_CLASSES = (
+    # enable whitenoise for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     # Note: if using messages, enable the sessions middleware too
     "django.middleware.common.CommonMiddleware",
     # CSRF protection on form submission
