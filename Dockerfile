@@ -46,4 +46,4 @@ USER microweb
 
 ENV PORT=80
 EXPOSE ${PORT}
-CMD python /usr/local/bin/gunicorn microweb.wsgi -b 0.0.0.0:${PORT} --forwarded-allow-ips '*' -w5
+CMD python /usr/local/bin/gunicorn microweb.wsgi -b 0.0.0.0:${PORT} --forwarded-allow-ips '*' -w5 --no-sendfile
