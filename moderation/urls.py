@@ -4,6 +4,6 @@ from moderation import views
 
 
 urlpatterns = [
-    url(r'^moderate/$',    views.confirm,  name='moderate-item'),
-    url(r'^moderate/do/$', views.moderate, name='actually-moderate-item'),
+    url(r"^moderate/$", views.confirm, name="moderate-item"),
+    url(r"^moderate/do/$", views.moderate, name="actually-moderate-item"),
 ]

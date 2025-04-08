@@ -9,23 +9,23 @@ TEMPLATE_DEBUG = False
 # ALLOWED_HOSTS is required in >Django 1.5. Since we allow customers to CNAME their domain
 # to a microcosm site, we cannot make use of this feature. Host is verified in the API.
 ALLOWED_HOSTS = [
-    '*',
+    "*",
 ]
 
 # Test runner requires a database. This should never be used to store anything.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "",
+        "USER": "",
+        "PASSWORD": "",
+        "HOST": "",
+        "PORT": "",
     }
 }
 
-TIME_ZONE = 'Europe/London'
-LANGUAGE_CODE = 'en-gb'
+TIME_ZONE = "Europe/London"
+LANGUAGE_CODE = "en-gb"
 
 # For Django sites framework, not used for anything in microcosm.
 SITE_ID = 1
@@ -37,35 +37,35 @@ USE_TZ = True
 
 ## DO NOT ENABLE THIS, it will break editing and other places that embed identifiers
 ## within forms.
-#USE_THOUSAND_SEPARATOR = True
+# USE_THOUSAND_SEPARATOR = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
-MEDIA_ROOT = ''
+MEDIA_ROOT = ""
 
 # URL that handles the media served from MEDIA_ROOT.
-MEDIA_URL = ''
+MEDIA_URL = ""
 
 # Absolute path to the directory static files should be collected to.
 # In production these are served by ~~nginx~~ or maybe whitenoise.
-STATIC_ROOT = '/srv/www/django/microweb/static/'
+STATIC_ROOT = "/srv/www/django/microweb/static/"
 
 # URL prefix for static files.
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATICFILES_DIRS = ()
 STATICFILES_FINDERS = (
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 )
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.template.context_processors.static',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.template.context_processors.static",
             ]
         },
     },
@@ -74,37 +74,29 @@ TEMPLATES = [
 
 MIDDLEWARE_CLASSES = (
     # Note: if using messages, enable the sessions middleware too
-    'django.middleware.common.CommonMiddleware',
-
+    "django.middleware.common.CommonMiddleware",
     # CSRF protection on form submission
-    'django.middleware.csrf.CsrfViewMiddleware',
-
+    "django.middleware.csrf.CsrfViewMiddleware",
     # Convenience for request context like site, user account, etc.
-    'core.middleware.context.ContextMiddleware',
-
+    "core.middleware.context.ContextMiddleware",
     # Redirect to custom domain, if one exists for the site
-    'core.middleware.redirect.DomainRedirectMiddleware',
-
+    "core.middleware.redirect.DomainRedirectMiddleware",
     # # cache busting for static files
     # 'core.middleware.modtimeurls.ModTimeUrlsMiddleware',
-
     # preconnect for 3rd party assets
-    'core.middleware.preconnect.PreconnectMiddleware',
-
+    "core.middleware.preconnect.PreconnectMiddleware",
     # CORS for text/html pages
-    'core.middleware.cors.CorsMiddleware',
-
+    "core.middleware.cors.CorsMiddleware",
     # # time all requests and report to riemann
     # 'core.middleware.timing.TimingMiddleware',
-
     # # push exceptions to riemann
     # 'core.middleware.exception.ExceptionMiddleware',
 )
 
-ROOT_URLCONF = 'microweb.urls'
+ROOT_URLCONF = "microweb.urls"
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'microweb.wsgi.application'
+WSGI_APPLICATION = "microweb.wsgi.application"
 
 INSTALLED_APPS = (
     "django.contrib.contenttypes",
@@ -148,8 +140,8 @@ from .local_settings import API_DOMAIN_NAME
 from .local_settings import API_PATH
 from .local_settings import API_VERSION
 
-if API_SCHEME == '' or API_DOMAIN_NAME == '' or API_PATH == '' or API_VERSION == '':
-    raise Exception('Please define API settings in local_settings.py')
+if API_SCHEME == "" or API_DOMAIN_NAME == "" or API_PATH == "" or API_VERSION == "":
+    raise Exception("Please define API settings in local_settings.py")
 
 # Riemann is used for exception reporting and metrics. Can be assigned empty
 # values in local_settings for local development.

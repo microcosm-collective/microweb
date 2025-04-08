@@ -48,17 +48,24 @@ from django.conf import settings
 
 import pylibmc as memcache
 
-url_attributes = ['src', 'href']
+url_attributes = ["src", "href"]
 
 # stop matching when we hit <, > or " to guard against erratic markup
-link_matcher = re.compile('((?:{})="(?:{})[^<>"]*")'.format("|".join(url_attributes), re.escape(settings.STATIC_URL)))
+link_matcher = re.compile(
+    '((?:{})="(?:{})[^<>"]*")'.format(
+        "|".join(url_attributes), re.escape(settings.STATIC_URL)
+    )
+)
+
 
 class ModTimeUrlsMiddleware:
     """Middleware for adding modtime GET parameter to each media URL in responses."""
 
     def __init__(self):
         # cache of hit file last modified times
-        self.mc = memcache.Client(['%s:%d' % (settings.MEMCACHE_HOST, settings.MEMCACHE_PORT)])
+        self.mc = memcache.Client(
+            ["%s:%d" % (settings.MEMCACHE_HOST, settings.MEMCACHE_PORT)]
+        )
 
     def append_modtime_to_url(self, url):
         """Append the file modification time to URL if the URL is in
@@ -69,38 +76,38 @@ class ModTimeUrlsMiddleware:
         if not (static):
             return url
 
-        if url == '/':
+        if url == "/":
             return url
 
-        filename = os.path.join(settings.STATIC_ROOT, url[len(settings.STATIC_URL):])
+        filename = os.path.join(settings.STATIC_ROOT, url[len(settings.STATIC_URL) :])
 
-        index = filename.rfind('?')
+        index = filename.rfind("?")
         contains_question_mark = index != -1
 
         if contains_question_mark:
-            if filename[index:].find("_=") != -1: # url already has a _=, skip it
+            if filename[index:].find("_=") != -1:  # url already has a _=, skip it
                 return url
 
             filename = filename[:index]
 
         try:
-            mc_ts = self.mc.get('fmod_' + filename)
+            mc_ts = self.mc.get("fmod_" + filename)
         except memcache.Error:
             mc_ts = None
 
         try:
             if not mc_ts is None:
-                return url + ('&' if contains_question_mark else '?') + "_=" + mc_ts
+                return url + ("&" if contains_question_mark else "?") + "_=" + mc_ts
 
             stat = os.stat(filename)
             timestamp = str(int(stat.st_mtime))
 
             try:
-                self.mc.set('fmod_' + filename, timestamp)
+                self.mc.set("fmod_" + filename, timestamp)
             except memcache.Error as e:
                 pass
 
-            return url + ('&' if contains_question_mark else '?') + "_=" + timestamp
+            return url + ("&" if contains_question_mark else "?") + "_=" + timestamp
         except OSError:
             pass
 
@@ -108,12 +115,13 @@ class ModTimeUrlsMiddleware:
 
     def process_response(self, request, response):
         """Add modification time GET parameter to each media URL in input."""
+
         def replace_urls(m):
             before, url, after = m.group(1).split('"')
 
             return before + '"' + self.append_modtime_to_url(url) + '"' + after
 
-        if 'text/html' in response.get('content-type').lower():
+        if "text/html" in response.get("content-type").lower():
             response.content = link_matcher.sub(replace_urls, response.content)
 
         return response

@@ -1,22 +1,23 @@
 from django import template
+
 register = template.Library()
 
-@register.inclusion_tag('block_event.html',takes_context=True)
+
+@register.inclusion_tag("block_event.html", takes_context=True)
 def event(context, item, **kwargs):
-
-    if hasattr(item,'item'):
-        context['item'] = item.item
+    if hasattr(item, "item"):
+        context["item"] = item.item
     else:
-        context['item'] = item
+        context["item"] = item
 
-    if 'unread' in kwargs:
-        context['unread'] = kwargs['unread']
+    if "unread" in kwargs:
+        context["unread"] = kwargs["unread"]
     else:
-        context['unread'] = False
+        context["unread"] = False
 
-    if 'showForum' in kwargs:
-        context['showForum'] = kwargs['showForum']
+    if "showForum" in kwargs:
+        context["showForum"] = kwargs["showForum"]
     else:
-        context['showForum'] = False
+        context["showForum"] = False
 
     return context

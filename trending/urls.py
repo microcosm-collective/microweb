@@ -4,5 +4,5 @@ from trending import views
 
 
 urlpatterns = [
-     url(r'^trending/$', views.list, name='list-trending'),
+    url(r"^trending/$", views.list, name="list-trending"),
 ]

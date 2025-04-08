@@ -16,20 +16,20 @@ from core.api.exceptions import APIException
 from core.views import respond_with_error
 from core.views import build_pagination_links
 
-logger = logging.getLogger('search.views')
-single_template = 'search.html'
+logger = logging.getLogger("search.views")
+single_template = "search.html"
 
 
 @require_safe
 def single(request):
-
     searchParams = dict(request.GET._iterlists())
-    if searchParams.get('defaults'):
-        searchParams['inTitle'] = 'true'
-        searchParams['sort'] = 'date'
+    if searchParams.get("defaults"):
+        searchParams["inTitle"] = "true"
+        searchParams["sort"] = "date"
 
-    url, params, headers = Search.build_request(request.get_host(), params=searchParams,
-        access_token=request.access_token)
+    url, params, headers = Search.build_request(
+        request.get_host(), params=searchParams, access_token=request.access_token
+    )
     request.view_requests.append(grequests.get(url, params=params, headers=headers))
 
     try:
@@ -39,13 +39,16 @@ def single(request):
     search = Search.from_api_response(responses[url])
 
     view_data = {
-        'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
-        'site': Site(responses[request.site_url]),
-        'content': search,
+        "user": Profile(responses[request.whoami_url], summary=False)
+        if request.whoami_url
+        else None,
+        "site": Site(responses[request.site_url]),
+        "content": search,
     }
 
-    if responses[url].get('results'):
-        view_data['pagination'] = build_pagination_links(responses[url]['results']['links'], search.results)
+    if responses[url].get("results"):
+        view_data["pagination"] = build_pagination_links(
+            responses[url]["results"]["links"], search.results
+        )
 
     return render(request, single_template, view_data)
-
