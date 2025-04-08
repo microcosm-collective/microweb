@@ -25,8 +25,8 @@
 			</div>
 			{% if showForum and item.breadcrumb %}
 			<div class="cell-forum">
-				in 
-				{% for key,value in item.breadcrumb.breadcrumb.iteritems %}
+				in
+				{% for key,value in item.breadcrumb.breadcrumb.items %}
 					<a href="{{ value.href }}">{{ value.title | safe }}</a> {% if not forloop.last %}/{% endif %}
 				{% endfor %}
 			</div>
@@ -70,7 +70,7 @@
 			<div class="list-collection-row-icon"> </div>
 			<div class="list-collection-row-offset row-title">
 				<ul style="font-size:0.8em;">
-				{% for key,value in microcosm.item.children.children.iteritems %}
+				{% for key,value in microcosm.item.children.children.items %}
 					<li style="display:inline; margin-right:1em; white-space:nowrap;">{% if value.logoUrl %}<a href="{{ value.href }}"><img src="{{ value.logoUrl | safe }}" class="subforumLogo" style="height:1em; vertical-align: -0.15em;" /></a> {% endif %}<a href="{{ value.href }}">{{ value.title | safe }}</a></li>
 				{% endfor %}
 				</ul>
@@ -79,5 +79,3 @@
 	</div>
 	{% endif %}
 </li>
-
-
