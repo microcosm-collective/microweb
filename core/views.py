@@ -231,9 +231,11 @@ class LegalView:
 
         view_data = {
             "site": Site(responses[request.site_url]),
-            "user": Profile(responses[request.whoami_url], summary=False)
-            if request.whoami_url
-            else None,
+            "user": (
+                Profile(responses[request.whoami_url], summary=False)
+                if request.whoami_url
+                else None
+            ),
             "site_section": "legal",
         }
         return render(request, LegalView.list_template, view_data)
@@ -255,9 +257,11 @@ class LegalView:
 
         view_data = {
             "site": Site(responses[request.site_url]),
-            "user": Profile(responses[request.whoami_url], summary=False)
-            if request.whoami_url
-            else None,
+            "user": (
+                Profile(responses[request.whoami_url], summary=False)
+                if request.whoami_url
+                else None
+            ),
             "content": legal,
             "site_section": "legal",
             "page_section": doc_name,

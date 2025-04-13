@@ -222,7 +222,6 @@ class PaginationTests(unittest.TestCase):
 
 
 class ResourceTests(unittest.TestCase):
-
     """
     Basic initialisation and serialisation tests for API resources.
     TODO: in some cases, as_dict is a property, in others it is a callable.

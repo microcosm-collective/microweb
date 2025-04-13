@@ -73,9 +73,11 @@ def root_microcosm(request):
     microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
     view_data = {
-        "user": Profile(responses[request.whoami_url], summary=False)
-        if request.whoami_url
-        else None,
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
         "site": Site(responses[request.site_url]),
         "content": microcosm,
         "item_type": "microcosm",
@@ -112,9 +114,11 @@ def single_microcosm(request, microcosm_id):
     microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
     view_data = {
-        "user": Profile(responses[request.whoami_url], summary=False)
-        if request.whoami_url
-        else None,
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
         "site": Site(responses[request.site_url]),
         "content": microcosm,
         "item_type": "microcosm",
@@ -300,9 +304,11 @@ def list_members(request, microcosm_id):
     roles = RoleList.from_api_response(responses[roles_url])
 
     view_data = {
-        "user": Profile(responses[request.whoami_url], summary=False)
-        if request.whoami_url
-        else None,
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
         "site": Site(responses[request.site_url]),
         "site_section": "memberships",
         "content": microcosm,
@@ -490,9 +496,11 @@ def create_members(request, microcosm_id):
         microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
         view_data = {
-            "user": Profile(responses[request.whoami_url], summary=False)
-            if request.whoami_url
-            else None,
+            "user": (
+                Profile(responses[request.whoami_url], summary=False)
+                if request.whoami_url
+                else None
+            ),
             "site": Site(responses[request.site_url]),
             "site_section": "memberships",
             "content": microcosm,
@@ -575,9 +583,11 @@ def edit_members(request, microcosm_id, group_id):
         profiles = RoleProfileList(responses[profiles_url])
 
         view_data = {
-            "user": Profile(responses[request.whoami_url], summary=False)
-            if request.whoami_url
-            else None,
+            "user": (
+                Profile(responses[request.whoami_url], summary=False)
+                if request.whoami_url
+                else None
+            ),
             "site": Site(responses[request.site_url]),
             "site_section": "memberships",
             "content": microcosm,

@@ -39,9 +39,11 @@ def single(request):
     search = Search.from_api_response(responses[url])
 
     view_data = {
-        "user": Profile(responses[request.whoami_url], summary=False)
-        if request.whoami_url
-        else None,
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
         "site": Site(responses[request.site_url]),
         "content": search,
     }

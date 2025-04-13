@@ -138,9 +138,11 @@ def list(request):
         filter_name.append("sorted alphabetically")
 
     view_data = {
-        "user": Profile(responses[request.whoami_url], summary=False)
-        if request.whoami_url
-        else None,
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
         "site": Site(responses[request.site_url]),
         "content": profiles,
         "pagination": build_pagination_links(

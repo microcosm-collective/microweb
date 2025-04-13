@@ -84,9 +84,11 @@ def single(request, huddle_id):
     participants_json = [p.as_dict for p in huddle.participants]
 
     view_data = {
-        "user": Profile(responses[request.whoami_url], summary=False)
-        if request.whoami_url
-        else None,
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
         "site": Site(responses[request.site_url]),
         "content": huddle,
         "comment_form": comment_form,
@@ -133,9 +135,11 @@ def list(request):
         filter_name.append("unread")
 
     view_data = {
-        "user": Profile(responses[request.whoami_url], summary=False)
-        if request.whoami_url
-        else None,
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
         "site": Site(responses[request.site_url]),
         "content": huddles,
         "unread": unread,

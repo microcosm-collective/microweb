@@ -13,13 +13,13 @@ class CorsMiddleware:
             if request.method == "GET":
                 response["Access-Control-Allow-Origin"] = "*"
                 response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-                response[
-                    "Access-Control-Allow-Headers"
-                ] = "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type"
+                response["Access-Control-Allow-Headers"] = (
+                    "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type"
+                )
             elif request.method == "POST":
                 response["Access-Control-Allow-Origin"] = "*"
                 response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-                response[
-                    "Access-Control-Allow-Headers"
-                ] = "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type"
+                response["Access-Control-Allow-Headers"] = (
+                    "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type"
+                )
         return response

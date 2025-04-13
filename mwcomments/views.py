@@ -124,9 +124,11 @@ def single(request, comment_id):
         attachments[str(c["id"])] = c_attachments
 
     view_data = {
-        "user": Profile(responses[request.whoami_url], summary=False)
-        if request.whoami_url
-        else None,
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
         "site": Site(responses[request.site_url]),
         "content": content,
         "comment_form": comment_form,
