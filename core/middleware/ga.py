@@ -3,12 +3,12 @@ from django.conf import settings
 
 from pyga.requests import Tracker, Page, Session, Visitor
 
-class GAMiddleware():
 
+class GAMiddleware:
     def process_request(self, request):
         if settings.GA_ENABLED:
             ip = request.META["REMOTE_ADDR"]
-            if request.META.has_key("CF-Connecting-IP"):
+            if "CF-Connecting-IP" in request.META:
                 ip = request.META["CF-Connecting-IP"]
 
             tracker = Tracker(settings.GA_KEY, request.META["HTTP_HOST"])

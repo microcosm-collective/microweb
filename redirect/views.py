@@ -1,6 +1,6 @@
 import logging
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 from django.views.decorators.http import require_safe
 
@@ -15,14 +15,13 @@ from core.api.resources import Site
 from core.api.resources import Redirect
 from core.api.resources import RESOURCE_PLURAL
 
-logger = logging.getLogger('redirect.views')
+logger = logging.getLogger("redirect.views")
 
 
 @require_safe
 def redirect_or_404(request):
-
     host = request.get_host()
-    
+
     # If the request host is already a microcosm subdomain, this is not
     # a request for an imported site, so return not found.
     if host.endswith(settings.API_DOMAIN_NAME):
@@ -35,13 +34,13 @@ def redirect_or_404(request):
         logger.error(str(APIException))
 
     # Reverse the effect of APPEND_SLASH on the path.
-    url_parts = urlparse.urlsplit(request.build_absolute_uri())
+    url_parts = urllib.parse.urlsplit(request.build_absolute_uri())
     path = url_parts.path
-    redirect_request = ''
-    if path.endswith('/'):
+    redirect_request = ""
+    if path.endswith("/"):
         redirect_request = path[:-1]
     if url_parts.query:
-        redirect_request += '?' + url_parts.query
+        redirect_request += "?" + url_parts.query
 
     # Handle errors in API request.
     try:
@@ -50,43 +49,49 @@ def redirect_or_404(request):
         return respond_with_error(request, exc)
 
     # Handle non-successful redirects (e.g. invalid path, forbidden).
-    if resource['status'] == 404:
+    if resource["status"] == 404:
         return ErrorView.not_found(request)
-    if resource['status'] == 403:
+    if resource["status"] == 403:
         return ErrorView.forbidden(request)
-    if resource['status'] != 301:
+    if resource["status"] != 301:
         return ErrorView.server_error(request)
 
     # Attachments just go to the URL
-    if resource['itemType'] == 'attachment':
-        return HttpResponseRedirect(resource['redirect']['href'])
+    if resource["itemType"] == "attachment":
+        return HttpResponseRedirect(resource["redirect"]["href"])
 
     # Construct the 301 based on the resource.
-    redirect_path = '/' + RESOURCE_PLURAL[resource['itemType']]
-    if resource.has_key('itemId'):
-        redirect_path += '/' + str(resource['itemId'])
+    redirect_path = "/" + RESOURCE_PLURAL[resource["itemType"]]
+    if "itemId" in resource:
+        redirect_path += "/" + str(resource["itemId"])
 
     # Hack comments to show in context.
-    if resource['itemType'] == 'comment' and resource.has_key('itemId'):
-        redirect_path += '/' + 'incontext'
+    if resource["itemType"] == "comment" and "itemId" in resource:
+        redirect_path += "/" + "incontext"
 
     # Build query parameters.
     query_dict = {}
 
     # Query parameter actions.
-    if resource.has_key('action'):
-        if resource.has_key('search'):
-            query_dict['q'] = resource['search']
-        if resource.has_key('online'):
-            query_dict['online'] = 'true'
+    if "action" in resource:
+        if "search" in resource:
+            query_dict["q"] = resource["search"]
+        if "online" in resource:
+            query_dict["online"] = "true"
 
     # Record offset.
-    if resource.has_key('offset'):
-        query_dict['offset'] = str(resource['offset'])
+    if "offset" in resource:
+        query_dict["offset"] = str(resource["offset"])
 
     # Reconstruct the URL, dropping query parameters and path fragment.
-    parts = (url_parts.scheme, url_parts.netloc, redirect_path, urllib.urlencode(query_dict), '')
-    redirect_url = urlparse.urlunsplit(parts)
+    parts = (
+        url_parts.scheme,
+        url_parts.netloc,
+        redirect_path,
+        urllib.parse.urlencode(query_dict),
+        "",
+    )
+    redirect_url = urllib.parse.urlunsplit(parts)
 
-    #print "Redirecting %s to %s" % (request.get_full_path(), redirect_url)
+    # print "Redirecting %s to %s" % (request.get_full_path(), redirect_url)
     return HttpResponseRedirect(redirect_url)

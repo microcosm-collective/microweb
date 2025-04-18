@@ -1,7 +1,7 @@
 import grequests
 import logging
 
-from urlparse import urlunparse
+from urllib.parse import urlunparse
 
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -32,13 +32,13 @@ from core.views import respond_with_error
 from core.views import process_attachments
 from core.views import build_newest_comment_link
 
-logger = logging.getLogger('comments.views')
+logger = logging.getLogger("comments.views")
 
 
 create_form = CommentForm
 edit_form = CommentForm
-form_template = 'forms/create_comment.html'
-single_template = 'comment.html'
+form_template = "forms/create_comment.html"
+single_template = "comment.html"
 
 
 def fill_from_get(request, initial):
@@ -46,33 +46,48 @@ def fill_from_get(request, initial):
     Populate comment form fields from GET parameters.
     """
 
-    if request.GET.has_key('itemId'):
-        initial['itemId'] = int(request.GET.get('itemId', None))
-    if request.GET.has_key('itemType'):
-        if request.GET['itemType'] not in COMMENTABLE_ITEM_TYPES:
+    if "itemId" in request.GET:
+        initial["itemId"] = int(request.GET.get("itemId", None))
+    if "itemType" in request.GET:
+        if request.GET["itemType"] not in COMMENTABLE_ITEM_TYPES:
             raise ValueError
-        initial['itemType'] = request.GET.get('itemType', None)
-    if request.GET.has_key('inReplyTo'):
-        initial['inReplyTo'] = int(request.GET.get('inReplyTo', None))
+        initial["itemType"] = request.GET.get("itemType", None)
+    if "inReplyTo" in request.GET:
+        initial["inReplyTo"] = int(request.GET.get("inReplyTo", None))
 
     return initial
 
 
 def build_comment_location(comment):
-    path = join_path_fragments([RESOURCE_PLURAL[comment.item_type], comment.item_id])
+    path = join_path_fragments(
+        [RESOURCE_PLURAL[comment.item_type], comment.item_id], True
+    )
 
-    if 'commentPage' in comment.meta.links and \
-                    'offset' in comment.meta.links['commentPage']['href']:
-        offset = comment.meta.links['commentPage']['href'].split('offset=')[1]
-        location = urlunparse((
-            '', '', path, '',
-            'offset=%s' % offset,
-            'comment%d' % comment.id,)
+    if (
+        "commentPage" in comment.meta.links
+        and "offset" in comment.meta.links["commentPage"]["href"]
+    ):
+        offset = comment.meta.links["commentPage"]["href"].split("offset=")[1]
+        location = urlunparse(
+            (
+                "",
+                "",
+                path,
+                "",
+                "offset=%s" % offset,
+                "comment%d" % comment.id,
+            )
         )
     else:
-        location = urlunparse((
-            '', '', path, '', '',
-            'comment%d' % comment.id,)
+        location = urlunparse(
+            (
+                "",
+                "",
+                path,
+                "",
+                "",
+                "comment%d" % comment.id,
+            )
         )
 
     return location
@@ -84,8 +99,9 @@ def single(request, comment_id):
     Display a single comment.
     """
 
-    url, params, headers = Comment.build_request(request.get_host(), id=comment_id,
-                                                 access_token=request.access_token)
+    url, params, headers = Comment.build_request(
+        request.get_host(), id=comment_id, access_token=request.access_token
+    )
     request.view_requests.append(grequests.get(url, params=params, headers=headers))
     try:
         responses = response_list_to_dict(grequests.map(request.view_requests))
@@ -94,33 +110,42 @@ def single(request, comment_id):
     content = Comment.from_api_response(responses[url])
     comment_form = CommentForm(
         initial={
-            'itemId': content.item_id,
-            'itemType': content.item_type,
-            'comment_id': content.id,
+            "itemId": content.item_id,
+            "itemType": content.item_type,
+            "comment_id": content.id,
         }
     )
 
     # Fetch any attachments on the comment.
     attachments = {}
     c = content.as_dict
-    if 'attachments' in c:
-        c_attachments = Attachment.retrieve(request.get_host(), "comments", c['id'],
-                                            access_token=request.access_token)
-        attachments[str(c['id'])] = c_attachments
+    if "attachments" in c:
+        c_attachments = Attachment.retrieve(
+            request.get_host(), "comments", c["id"], access_token=request.access_token
+        )
+        attachments[str(c["id"])] = c_attachments
 
     view_data = {
-        'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
-        'site': Site(responses[request.site_url]),
-        'content': content,
-        'comment_form': comment_form,
-        'attachments': attachments
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
+        "site": Site(responses[request.site_url]),
+        "content": content,
+        "comment_form": comment_form,
+        "attachments": attachments,
     }
 
     return render(request, single_template, view_data)
 
 
 @require_authentication
-@require_http_methods(['POST',])
+@require_http_methods(
+    [
+        "POST",
+    ]
+)
 def create(request):
     """
     Create a comment, processing any attachments (including deletion of attachments) and
@@ -129,7 +154,7 @@ def create(request):
 
     # TODO: determine whether the single comment creation form will use this view.
     # Remove the conditional if not.
-    if request.method == 'POST':
+    if request.method == "POST":
         form = CommentForm(request.POST)
 
         # If invalid, load single comment view showing validation errors.
@@ -139,16 +164,18 @@ def create(request):
             except APIException as exc:
                 return respond_with_error(request, exc)
             view_data = {
-                'user': Profile(responses[request.whoami_url], summary=False),
-                'site': Site(responses[request.site_url]),
-                'form': form,
+                "user": Profile(responses[request.whoami_url], summary=False),
+                "site": Site(responses[request.site_url]),
+                "form": form,
             }
             return render(request, form_template, view_data)
 
         # Create comment with API.
         comment_request = Comment.from_create_form(form.cleaned_data)
         try:
-            comment = comment_request.create(request.get_host(), access_token=request.access_token)
+            comment = comment_request.create(
+                request.get_host(), access_token=request.access_token
+            )
         except APIException as exc:
             return respond_with_error(request, exc)
 
@@ -160,29 +187,34 @@ def create(request):
             except APIException as exc:
                 return respond_with_error(request, exc)
             comment_form = CommentForm(
-                initial = {
-                    'itemId': comment.item_id,
-                    'itemType': comment.item_type,
-                    'comment_id': comment.id,
-                    'markdown': request.POST['markdown'],
+                initial={
+                    "itemId": comment.item_id,
+                    "itemType": comment.item_type,
+                    "comment_id": comment.id,
+                    "markdown": request.POST["markdown"],
                 }
             )
             view_data = {
-                'user': Profile(responses[request.whoami_url], summary=False),
-                'site': Site(responses[request.site_url]),
-                'content': comment,
-                'comment_form': comment_form,
-                'error': 'Sorry, one of your files was over 5MB. Please try again.',
-                }
+                "user": Profile(responses[request.whoami_url], summary=False),
+                "site": Site(responses[request.site_url]),
+                "content": comment,
+                "comment_form": comment_form,
+                "error": "Sorry, one of your files was over 5MB. Please try again.",
+            }
             return render(request, form_template, view_data)
 
         # API returns which page in the thread this comments appear in, so redirect there.
-        if comment.meta.links.get('commentPage'):
+        if comment.meta.links.get("commentPage"):
             return HttpResponseRedirect(build_comment_location(comment))
 
 
 @require_authentication
-@require_http_methods(['GET', 'POST',])
+@require_http_methods(
+    [
+        "GET",
+        "POST",
+    ]
+)
 @cache_control(must_revalidate=True, max_age=0)
 def edit(request, comment_id):
     """
@@ -193,16 +225,18 @@ def edit(request, comment_id):
     except APIException as exc:
         return respond_with_error(request, exc)
     view_data = {
-        'user': Profile(responses[request.whoami_url], summary=False),
-        'site': Site(responses[request.site_url]),
+        "user": Profile(responses[request.whoami_url], summary=False),
+        "site": Site(responses[request.site_url]),
     }
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = CommentForm(request.POST)
         if form.is_valid():
             comment_request = Comment.from_edit_form(form.cleaned_data)
             try:
-                comment = comment_request.update(request.get_host(), access_token=request.access_token)
+                comment = comment_request.update(
+                    request.get_host(), access_token=request.access_token
+                )
             except APIException as exc:
                 return respond_with_error(request, exc)
 
@@ -210,61 +244,76 @@ def edit(request, comment_id):
                 process_attachments(request, comment)
             except ValidationError:
                 try:
-                    responses = response_list_to_dict(grequests.map(request.view_requests))
+                    responses = response_list_to_dict(
+                        grequests.map(request.view_requests)
+                    )
                 except APIException as exc:
                     return respond_with_error(request, exc)
                 comment_form = CommentForm(
-                    initial = {
-                        'itemId': comment.item_id,
-                        'itemType': comment.item_type,
-                        'comment_id': comment.id,
-                        'markdown': request.POST['markdown'],
-                        })
+                    initial={
+                        "itemId": comment.item_id,
+                        "itemType": comment.item_type,
+                        "comment_id": comment.id,
+                        "markdown": request.POST["markdown"],
+                    }
+                )
                 view_data = {
-                    'user': Profile(responses[request.whoami_url], summary=False),
-                    'site': Site(responses[request.site_url]),
-                    'content': comment,
-                    'comment_form': comment_form,
-                    'error': 'Sorry, one of your files was over 5MB. Please try again.',
+                    "user": Profile(responses[request.whoami_url], summary=False),
+                    "site": Site(responses[request.site_url]),
+                    "content": comment,
+                    "comment_form": comment_form,
+                    "error": "Sorry, one of your files was over 5MB. Please try again.",
                 }
                 return render(request, form_template, view_data)
 
-            if comment.meta.links.get('commentPage'):
+            if comment.meta.links.get("commentPage"):
                 return HttpResponseRedirect(build_comment_location(comment))
             else:
-                return HttpResponseRedirect(reverse('single-comment', args=(comment.id,)))
+                return HttpResponseRedirect(
+                    reverse("single-comment", args=(comment.id,))
+                )
         else:
-            view_data['form'] = form
+            view_data["form"] = form
             return render(request, form_template, view_data)
 
-    if request.method == 'GET':
+    if request.method == "GET":
         try:
-            comment = Comment.retrieve(request.get_host(), comment_id, access_token=request.access_token)
+            comment = Comment.retrieve(
+                request.get_host(), comment_id, access_token=request.access_token
+            )
         except APIException as exc:
             return respond_with_error(request, exc)
-        view_data['form'] = CommentForm(comment.as_dict)
+        view_data["form"] = CommentForm(comment.as_dict)
         return render(request, form_template, view_data)
 
 
 @require_authentication
-@require_http_methods(['POST',])
+@require_http_methods(
+    [
+        "POST",
+    ]
+)
 def delete(request, comment_id):
     """
     Delete a comment and be redirected to the item.
     """
 
     try:
-        comment = Comment.retrieve(request.get_host(), comment_id, access_token=request.access_token)
+        comment = Comment.retrieve(
+            request.get_host(), comment_id, access_token=request.access_token
+        )
         comment.delete(request.get_host(), request.access_token)
     except APIException as exc:
         return respond_with_error(request, exc)
 
-    if comment.item_type == 'event':
-        return HttpResponseRedirect(reverse('single-event', args=(comment.item_id,)))
-    elif comment.item_type == 'conversation':
-        return HttpResponseRedirect(reverse('single-conversation', args=(comment.item_id,)))
+    if comment.item_type == "event":
+        return HttpResponseRedirect(reverse("single-event", args=(comment.item_id,)))
+    elif comment.item_type == "conversation":
+        return HttpResponseRedirect(
+            reverse("single-conversation", args=(comment.item_id,))
+        )
     else:
-        return HttpResponseRedirect(reverse('microcosm-list'))
+        return HttpResponseRedirect(reverse("microcosm-list"))
 
 
 @require_authentication
@@ -275,7 +324,9 @@ def incontext(request, comment_id):
     """
 
     try:
-        response = Comment.incontext(request.get_host(), comment_id, access_token=request.access_token)
+        response = Comment.incontext(
+            request.get_host(), comment_id, access_token=request.access_token
+        )
     except APIException as exc:
         return respond_with_error(request, exc)
 
@@ -294,7 +345,7 @@ def source(request, comment_id):
         response = Comment.source(request.get_host(), comment_id, request.access_token)
     except APIException as exc:
         return respond_with_error(request, exc)
-    return HttpResponse(response, content_type='application/json')
+    return HttpResponse(response, content_type="application/json")
 
 
 @require_authentication
@@ -305,8 +356,12 @@ def attachments(request, comment_id):
     """
 
     try:
-        response = Attachment.source(request.get_host(), type=Comment.api_path_fragment, id=comment_id,
-            access_token=request.access_token)
+        response = Attachment.source(
+            request.get_host(),
+            type=Comment.api_path_fragment,
+            id=comment_id,
+            access_token=request.access_token,
+        )
     except APIException as exc:
         return respond_with_error(request, exc)
-    return HttpResponse(response, content_type='application/json')
+    return HttpResponse(response, content_type="application/json")

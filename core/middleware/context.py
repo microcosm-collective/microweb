@@ -9,15 +9,18 @@ from django.http import HttpResponseRedirect
 from core.api.resources import Site
 from core.api.resources import WhoAmI
 
-logger = logging.getLogger('core.middleware.context')
+logger = logging.getLogger("core.middleware.context")
 
-class ContextMiddleware():
+
+class ContextMiddleware:
     """
     Provides request context such as the current site and authentication status.
     """
 
     def __init__(self):
-        self.mc = memcache.Client(['%s:%d' % (settings.MEMCACHE_HOST, settings.MEMCACHE_PORT)])
+        self.mc = memcache.Client(
+            ["%s:%d" % (settings.MEMCACHE_HOST, settings.MEMCACHE_PORT)]
+        )
 
     def process_request(self, request):
         """
@@ -28,18 +31,26 @@ class ContextMiddleware():
         """
 
         request.access_token = None
-        request.whoami_url = ''
+        request.whoami_url = ""
         request.view_requests = []
 
-        if request.COOKIES.has_key('access_token'):
+        if "access_token" in request.COOKIES:
             # Clean up empty access token.
-            if request.COOKIES['access_token'] == '':
-                response = HttpResponseRedirect('/')
-                response.set_cookie('access_token', '', expires="Thu, 01 Jan 1970 00:00:00 GMT")
+            if request.COOKIES["access_token"] == "":
+                response = HttpResponseRedirect("/")
+                response.set_cookie(
+                    "access_token", "", expires="Thu, 01 Jan 1970 00:00:00 GMT"
+                )
                 return response
-            request.access_token = request.COOKIES['access_token']
-            request.whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
-            request.view_requests.append(grequests.get(request.whoami_url, params=params, headers=headers))
+            request.access_token = request.COOKIES["access_token"]
+            request.whoami_url, params, headers = WhoAmI.build_request(
+                request.get_host(), request.access_token
+            )
+            request.view_requests.append(
+                grequests.get(request.whoami_url, params=params, headers=headers)
+            )
 
         request.site_url, params, headers = Site.build_request(request.get_host())
-        request.view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
+        request.view_requests.append(
+            grequests.get(request.site_url, params=params, headers=headers)
+        )

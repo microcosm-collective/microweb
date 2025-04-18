@@ -1,0 +1,46 @@
+---
+name: Tests
+
+on:
+  push:
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.7.17"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install packages
+        run: pip install black
+      - name: Run black
+        run: black . --check
+
+  test:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.7.17"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: sudo apt-get install libmemcached-dev zlib1g-dev memcached
+      - name: Start memcached
+        run: memcached -d
+      - name: Install packages
+        run: pip install -r requirements.txt
+      - name: Load settings
+        run: cp microweb/local_settings.py.ci microweb/local_settings.py
+      - name: Run tests
+        run: PYTHONPATH=. DJANGO_SETTINGS_MODULE=microweb.settings pytest tests core/tests/tests.py
