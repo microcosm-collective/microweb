@@ -80,7 +80,7 @@ def get_subdomain_url(host):
         return settings.API_SCHEME + resolved_name
 
 
-def join_path_fragments(path_fragments):
+def join_path_fragments(path_fragments, trailing_slash=False):
     path = ""
 
     for fragment in path_fragments:
@@ -91,6 +91,10 @@ def join_path_fragments(path_fragments):
             if "/" in fragment:
                 raise AssertionError("Do not use path fragments containing slashes")
         path += "/" + fragment
+
+    if trailing_slash:
+        path += "/"
+
     return path
 
 

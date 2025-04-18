@@ -59,7 +59,7 @@ def fill_from_get(request, initial):
 
 
 def build_comment_location(comment):
-    path = join_path_fragments([RESOURCE_PLURAL[comment.item_type], comment.item_id])
+    path = join_path_fragments([RESOURCE_PLURAL[comment.item_type], comment.item_id], True)
 
     if (
         "commentPage" in comment.meta.links
