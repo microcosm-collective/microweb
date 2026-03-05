@@ -220,3 +220,37 @@ If you need to restart memcached, you can use:
 ```bash
 dokku memcached:restart microcosm-memcached
 ```
+
+## Maintaining / updating running server
+
+### Enabling/disabling a server
+
+On the lb server, in `/etc/nginx/nginx.conf`, there is a block like:
+
+```
+        # microweb is https?://*.microcosm.app
+        upstream microweb  {
+                server 192.168.129.5:9000;   # wpy01
+                server 192.168.198.69:9000;  # wpy02
+                # server 192.168.198.188:9000; # wpy03
+        }
+```
+
+You should be able to bring servers in & out of rotation just by commenting/uncommenting the relevant line & reloading this nginx config (`sudo service nginx reload`).
+
+### Updating the server
+
+To update from a local git repository, check out this repo and then:
+
+```bash
+# remote add only needs doing the first time you clone the repo
+git remote add wpy03 dokku@lfgssdemo:microweb
+git push wpy03 main
+```
+
+You should see dokku use the `Dockerfile` to build a new image & switch it into production.
+If the docker build errors for whatever reason, dokku should keep using the current image.
+
+#### Continuous deployment
+
+If we feel confident, we can generate a deployment SSH key & do the git push automatically from GitHub every time we merge a PR.  
