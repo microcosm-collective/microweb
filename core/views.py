@@ -7,10 +7,10 @@ import random
 
 from requests import RequestException
 
-from urllib import urlencode
-from urlparse import urlparse
-from urlparse import parse_qs
-from urlparse import urlunparse
+from urllib.parse import urlencode
+from urllib.parse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import urlunparse
 
 from functools import wraps
 
@@ -49,13 +49,15 @@ from core.api.resources import WhoAmI
 
 from core.api.resources import build_url
 
-logger = logging.getLogger('core.views')
+logger = logging.getLogger("core.views")
+
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     """
     generates identifies that are used as cache busters in querystrings
     """
-    return ''.join(random.SystemRandom().choice(chars) for _ in range(size))
+    return "".join(random.SystemRandom().choice(chars) for _ in range(size))
+
 
 def exception_handler(view_func):
     """
@@ -79,14 +81,15 @@ def exception_handler(view_func):
                 return ErrorView.not_found(request)
             elif e.status_code == 400:
                 # Error code 14 indicates that the requested forum does not exist.
-                if e.detail['errorCode'] == 14:
-                    return HttpResponseRedirect('http://microcosm.app')
+                if e.detail["errorCode"] == 14:
+                    return HttpResponseRedirect("http://microcosm.app")
             else:
                 raise
+
     return decorator
 
-def respond_with_error(request, exception):
 
+def respond_with_error(request, exception):
     if not isinstance(exception, APIException):
         logger.error(str(exception))
         return ErrorView.server_error(request)
@@ -100,6 +103,7 @@ def respond_with_error(request, exception):
     else:
         return ErrorView.server_error(request, exception)
 
+
 def require_authentication(view_func):
     """
     Returns HTTP 401 if request.access_token is not present.
@@ -107,11 +111,13 @@ def require_authentication(view_func):
 
     @wraps(view_func)
     def decorator(request, *args, **kwargs):
-        if hasattr(request, 'access_token'):
+        if hasattr(request, "access_token"):
             return view_func(request, *args, **kwargs)
         else:
             return ErrorView.forbidden(request)
+
     return decorator
+
 
 def build_pagination_links(request, paged_list):
     """
@@ -119,21 +125,22 @@ def build_pagination_links(request, paged_list):
     and generates a dictionary of navigation links based on that.
     """
 
-    if not hasattr(paged_list, 'page'):
+    if not hasattr(paged_list, "page"):
         return {}
 
     page_nav = {
-    'page': int(paged_list.page),
-    'total_pages': int(paged_list.total_pages),
-    'limit': int(paged_list.limit),
-    'offset': int(paged_list.offset)
+        "page": int(paged_list.page),
+        "total_pages": int(paged_list.total_pages),
+        "limit": int(paged_list.limit),
+        "offset": int(paged_list.offset),
     }
 
     for item in request:
-        item['href'] = api_url_to_gui_url(item['href'])
-        page_nav[item['rel']] = item
+        item["href"] = api_url_to_gui_url(item["href"])
+        page_nav[item["rel"]] = item
 
     return page_nav
+
 
 def process_attachments(request, comment):
     """
@@ -143,68 +150,76 @@ def process_attachments(request, comment):
     """
 
     # Check if any existing comment attachments are to be deleted.
-    if request.POST.get('attachments-delete'):
-        attachments_delete = request.POST.get('attachments-delete').split(",")
+    if request.POST.get("attachments-delete"):
+        attachments_delete = request.POST.get("attachments-delete").split(",")
         for fileHash in attachments_delete:
-            Attachment.delete(request.get_host(), Comment.api_path_fragment, comment.id, fileHash)
+            Attachment.delete(
+                request.get_host(), Comment.api_path_fragment, comment.id, fileHash
+            )
 
     # Check if any files have been uploaded with the request.
-    if request.FILES.has_key('attachments'):
-        for f in request.FILES.getlist('attachments'):
+    if "attachments" in request.FILES:
+        for f in request.FILES.getlist("attachments"):
             file_request = FileMetadata.from_create_form(f)
             # Maximum file size is 30 MB.
             if len(file_request.file[f.name]) >= 31457280:
                 raise ValidationError
             # Associate attachment with comment using attachments API.
             else:
-                file_metadata = file_request.create(request.get_host(), request.access_token)
-                Attachment.create(request.get_host(), file_metadata.file_hash,
-                                  comment_id=comment.id, access_token=request.access_token, file_name=f.name)
+                file_metadata = file_request.create(
+                    request.get_host(), request.access_token
+                )
+                Attachment.create(
+                    request.get_host(),
+                    file_metadata.file_hash,
+                    comment_id=comment.id,
+                    access_token=request.access_token,
+                    file_name=f.name,
+                )
 
 
 def build_newest_comment_link(response, request=None):
-
-    source = ''
-    medium = ''
-    campaign = ''
+    source = ""
+    medium = ""
+    campaign = ""
 
     if request is not None:
-        source = request.GET.get('utm_source', '')
-        medium = request.GET.get('utm_medium', '')
-        campaign = request.GET.get('utm_campaign', '')
+        source = request.GET.get("utm_source", "")
+        medium = request.GET.get("utm_medium", "")
+        campaign = request.GET.get("utm_campaign", "")
 
-    response = response['comments']['links']
+    response = response["comments"]["links"]
     for link in response:
-        if link['rel'] == 'self':
-            response = link['href']
+        if link["rel"] == "self":
+            response = link["href"]
     response = api_url_to_gui_url(response)
     pr = urlparse(response)
     queries = parse_qs(pr[4])
     frag = ""
 
-    if queries.get('comment_id'):
-        frag = 'comment' + queries['comment_id'][0]
-        del queries['comment_id']
+    if queries.get("comment_id"):
+        frag = "comment" + queries["comment_id"][0]
+        del queries["comment_id"]
 
     # queries is a dictionary of 1-item lists (as we don't re-use keys in our query string)
     # urlencode will encode the lists into the url (offset=[25]) etc.  So get the values straight.
-    for (key, value) in queries.items():
+    for key, value in list(queries.items()):
         queries[key] = value[0]
 
     # preserve utm tracking from original request
     if source and medium and campaign:
-        queries['utm_source'] = source
-        queries['utm_medium'] = medium
-        queries['utm_campaign'] = campaign
+        queries["utm_source"] = source
+        queries["utm_medium"] = medium
+        queries["utm_campaign"] = campaign
 
     queries = urlencode(queries)
     response = urlunparse((pr[0], pr[1], pr[2], pr[3], queries, frag))
     return response
 
 
-class LegalView(object):
-    list_template = 'legals.html'
-    single_template = 'legal.html'
+class LegalView:
+    list_template = "legals.html"
+    single_template = "legal.html"
 
     @staticmethod
     @require_safe
@@ -215,16 +230,20 @@ class LegalView(object):
             return respond_with_error(request, exc)
 
         view_data = {
-            'site': Site(responses[request.site_url]),
-            'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
-            'site_section': 'legal'
+            "site": Site(responses[request.site_url]),
+            "user": (
+                Profile(responses[request.whoami_url], summary=False)
+                if request.whoami_url
+                else None
+            ),
+            "site_section": "legal",
         }
         return render(request, LegalView.list_template, view_data)
 
     @staticmethod
     @require_safe
     def single(request, doc_name):
-        if not doc_name in ['cookies', 'privacy', 'terms']:
+        if not doc_name in ["cookies", "privacy", "terms"]:
             return HttpResponseNotFound()
 
         url, params, headers = Legal.build_request(request.get_host(), doc=doc_name)
@@ -237,63 +256,79 @@ class LegalView(object):
         legal = Legal.from_api_response(responses[url])
 
         view_data = {
-            'site': Site(responses[request.site_url]),
-            'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
-            'content': legal,
-            'site_section': 'legal',
-            'page_section': doc_name
+            "site": Site(responses[request.site_url]),
+            "user": (
+                Profile(responses[request.whoami_url], summary=False)
+                if request.whoami_url
+                else None
+            ),
+            "content": legal,
+            "site_section": "legal",
+            "page_section": doc_name,
         }
         return render(request, LegalView.single_template, view_data)
 
 
-class ErrorView(object):
+class ErrorView:
     @staticmethod
     def not_found(request):
         view_data = {}
         view_requests = []
 
-        if request.COOKIES.has_key('access_token'):
-            request.access_token = request.COOKIES['access_token']
-            whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
-            view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
+        if "access_token" in request.COOKIES:
+            request.access_token = request.COOKIES["access_token"]
+            whoami_url, params, headers = WhoAmI.build_request(
+                request.get_host(), request.access_token
+            )
+            view_requests.append(
+                grequests.get(whoami_url, params=params, headers=headers)
+            )
 
         site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
+        view_requests.append(
+            grequests.get(request.site_url, params=params, headers=headers)
+        )
 
         responses = response_list_to_dict(grequests.map(view_requests))
         if request.whoami_url:
             profile = Profile(responses[whoami_url], summary=False)
-            view_data['user'] = profile
+            view_data["user"] = profile
 
         site = Site(responses[site_url])
-        view_data['site'] = site
+        view_data["site"] = site
 
         context = RequestContext(request, view_data)
-        return HttpResponseNotFound(loader.get_template('404.html').render(context))
+        return HttpResponseNotFound(loader.get_template("404.html").render(context))
 
     @staticmethod
     def forbidden(request):
         view_data = {}
         view_requests = []
 
-        if request.COOKIES.has_key('access_token'):
-            request.access_token = request.COOKIES['access_token']
-            whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
-            view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
+        if "access_token" in request.COOKIES:
+            request.access_token = request.COOKIES["access_token"]
+            whoami_url, params, headers = WhoAmI.build_request(
+                request.get_host(), request.access_token
+            )
+            view_requests.append(
+                grequests.get(whoami_url, params=params, headers=headers)
+            )
 
         site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
+        view_requests.append(
+            grequests.get(request.site_url, params=params, headers=headers)
+        )
 
         responses = response_list_to_dict(grequests.map(view_requests))
         if request.whoami_url:
             profile = Profile(responses[whoami_url], summary=False)
-            view_data['user'] = profile
+            view_data["user"] = profile
 
         site = Site(responses[site_url])
-        view_data['site'] = site
+        view_data["site"] = site
 
         context = RequestContext(request, view_data)
-        return HttpResponseForbidden(loader.get_template('403.html').render(context))
+        return HttpResponseForbidden(loader.get_template("403.html").render(context))
 
     @staticmethod
     def server_error(request, exception=None):
@@ -306,7 +341,9 @@ class ErrorView(object):
         #     view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
 
         site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
+        view_requests.append(
+            grequests.get(request.site_url, params=params, headers=headers)
+        )
 
         responses = response_list_to_dict(grequests.map(view_requests))
         # if request.whoami_url:
@@ -314,15 +351,15 @@ class ErrorView(object):
         #     view_data['user'] = profile
 
         site = Site(responses[site_url])
-        view_data['site'] = site
+        view_data["site"] = site
 
         # Provide detailed error if returned in the response.
-        if hasattr(exception, 'detail'):
-            if 'errorDetail' in exception.detail:
-                view_data['detail'] = exception.detail['errorDetail']
+        if hasattr(exception, "detail"):
+            if "errorDetail" in exception.detail:
+                view_data["detail"] = exception.detail["errorDetail"]
 
         context = RequestContext(request, view_data)
-        return HttpResponseServerError(loader.get_template('500.html').render(context))
+        return HttpResponseServerError(loader.get_template("500.html").render(context))
 
     @staticmethod
     def requires_login(request):
@@ -330,16 +367,18 @@ class ErrorView(object):
         view_requests = []
 
         site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
+        view_requests.append(
+            grequests.get(request.site_url, params=params, headers=headers)
+        )
         responses = response_list_to_dict(grequests.map(view_requests))
-        view_data['site'] = Site(responses[site_url])
-        view_data['logout'] = True
+        view_data["site"] = Site(responses[site_url])
+        view_data["logout"] = True
 
         context = RequestContext(request, view_data)
-        return HttpResponseForbidden(loader.get_template('403.html').render(context))
+        return HttpResponseForbidden(loader.get_template("403.html").render(context))
 
-class AuthenticationView(object):
 
+class AuthenticationView:
     @staticmethod
     @csrf_exempt
     def login(request):
@@ -354,29 +393,28 @@ class AuthenticationView(object):
         redirected.
         """
 
-        target_url = request.POST.get('target_url')
-        assertion = request.POST.get('Assertion')
-        postdata = {
-            'Assertion': assertion,
-            'ClientSecret':settings.CLIENT_SECRET
-        }
+        target_url = request.POST.get("target_url")
+        assertion = request.POST.get("Assertion")
+        postdata = {"Assertion": assertion, "ClientSecret": settings.CLIENT_SECRET}
 
-        url = build_url(request.get_host(), ['auth'])
+        url = build_url(request.get_host(), ["auth"])
         try:
             response = requests.post(url, data=postdata, headers={})
         except RequestException:
             return ErrorView.server_error(request)
 
-        access_token = response.json()['data']
-        if access_token is None or access_token == '':
+        access_token = response.json()["data"]
+        if access_token is None or access_token == "":
             return ErrorView.server_error(request)
 
-        if target_url is None or target_url == '':
-            target_url = '/'
+        if target_url is None or target_url == "":
+            target_url = "/"
 
         response = HttpResponseRedirect(target_url)
-        expires = datetime.datetime.fromtimestamp(2 ** 31 - 1)
-        response.set_cookie('access_token', access_token, expires=expires, httponly=True)
+        expires = datetime.datetime.fromtimestamp(2**31 - 1)
+        response.set_cookie(
+            "access_token", access_token, expires=expires, httponly=True
+        )
         return response
 
     @staticmethod
@@ -390,19 +428,24 @@ class AuthenticationView(object):
         access_token cookie.
         """
 
-        response = redirect('/')
-        if request.COOKIES.has_key('access_token'):
-            response.set_cookie('access_token', '', expires="Thu, 01 Jan 1970 00:00:00 GMT")
-            url = build_url(request.get_host(), ['auth', request.access_token])
+        response = redirect("/")
+        if "access_token" in request.COOKIES:
+            response.set_cookie(
+                "access_token", "", expires="Thu, 01 Jan 1970 00:00:00 GMT"
+            )
+            url = build_url(request.get_host(), ["auth", request.access_token])
             try:
-                requests.post(url, params={'method': 'DELETE', 'access_token': request.access_token})
+                requests.post(
+                    url,
+                    params={"method": "DELETE", "access_token": request.access_token},
+                )
             except RequestException:
                 return ErrorView.server_error(request)
 
         return response
 
-class Auth0View(object):
 
+class Auth0View:
     @staticmethod
     @csrf_exempt
     def login(request):
@@ -417,61 +460,62 @@ class Auth0View(object):
         redirected.
         """
 
-        code = request.GET.get('code')
-        state = request.GET.get('state')
-        target_url = request.GET.get('target_url')
+        code = request.GET.get("code")
+        state = request.GET.get("state")
+        target_url = request.GET.get("target_url")
 
         postdata = {
-            'Code': code,
-            'State': state,
-            'ClientSecret': settings.CLIENT_SECRET
+            "Code": code,
+            "State": state,
+            "ClientSecret": settings.CLIENT_SECRET,
         }
 
-        url = build_url(request.get_host(), ['auth0'])
+        url = build_url(request.get_host(), ["auth0"])
         try:
             response = requests.post(url, data=postdata, headers={})
         except RequestException:
             return ErrorView.server_error(request)
 
-        access_token = response.json()['data']
-        if access_token is None or access_token == '':
+        access_token = response.json()["data"]
+        if access_token is None or access_token == "":
             return ErrorView.server_error(request)
 
-        if target_url is None or target_url == '':
+        if target_url is None or target_url == "":
             target_url = state
 
-        if target_url is None or target_url == '':
-            target_url = '/'
+        if target_url is None or target_url == "":
+            target_url = "/"
 
         # Add cachebuster as the unauth'd page may be very aggressively cached
         pr = urlparse(target_url)
         qs = parse_qs(pr[4])
-        qs.update({'cachebuster': id_generator()})
+        qs.update({"cachebuster": id_generator()})
         target_url = urlunparse((pr[0], pr[1], pr[2], pr[3], urlencode(qs), pr[5]))
 
         # Redirect and set cookie
         resp = HttpResponseRedirect(target_url)
-        expires = datetime.datetime.fromtimestamp(2 ** 31 - 1)
-        resp.set_cookie('access_token', access_token, expires=expires, httponly=True)
+        expires = datetime.datetime.fromtimestamp(2**31 - 1)
+        resp.set_cookie("access_token", access_token, expires=expires, httponly=True)
 
         return resp
 
+
 def echo_headers(request):
-    view_data = '<html><body><table>'
-    for key in request.META.keys():
-        view_data += '<tr><td>%s</td><td>%s</td></tr>' % (key, request.META[key])
-    view_data += '</table></body></html>'
-    return HttpResponse(view_data, content_type='text/html')
+    view_data = "<html><body><table>"
+    for key in list(request.META.keys()):
+        view_data += f"<tr><td>{key}</td><td>{request.META[key]}</td></tr>"
+    view_data += "</table></body></html>"
+    return HttpResponse(view_data, content_type="text/html")
 
 
 class FaviconView(RedirectView):
     def get_redirect_url(self, **kwargs):
-        return settings.STATIC_URL + 'img/favico.png'
+        return settings.STATIC_URL + "img/favico.png"
 
 
 class RobotsView(TemplateView):
-    template_name = 'robots.txt'
-    content_type = 'text/plain'
+    template_name = "robots.txt"
+    content_type = "text/plain"
 
     def get_context_data(self, **kwargs):
-        return super(RobotsView, self).get_context_data(**kwargs)
+        return super().get_context_data(**kwargs)

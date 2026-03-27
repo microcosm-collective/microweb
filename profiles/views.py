@@ -30,12 +30,12 @@ from core.views import require_authentication
 from core.views import respond_with_error
 
 
-logger = logging.getLogger('profiles.views')
+logger = logging.getLogger("profiles.views")
 edit_form = ProfileEdit
 patch_form = ProfilePatch
-form_template = 'forms/profile.html'
-single_template = 'profile.html'
-list_template = 'profiles.html'
+form_template = "forms/profile.html"
+single_template = "profile.html"
+list_template = "profiles.html"
 
 
 @require_safe
@@ -45,52 +45,73 @@ def single(request, profile_id):
     """
 
     # Fetch profile details.
-    profile_url, params, headers = Profile.build_request(request.get_host(), profile_id, access_token=request.access_token)
-    request.view_requests.append(grequests.get(profile_url, params=params, headers=headers))
+    profile_url, params, headers = Profile.build_request(
+        request.get_host(), profile_id, access_token=request.access_token
+    )
+    request.view_requests.append(
+        grequests.get(profile_url, params=params, headers=headers)
+    )
 
     # Fetch items created by this profile.
-    search_q = 'type:conversation type:event type:huddle type:comment authorId:%s' % profile_id
-    search_params = {'limit': 10, 'q': search_q, 'sort': 'date'}
-    search_url, params, headers = Search.build_request(request.get_host(), search_params,
-        access_token=request.access_token)
-    request.view_requests.append(grequests.get(search_url, params=params, headers=headers))
+    search_q = (
+        "type:conversation type:event type:huddle type:comment authorId:%s" % profile_id
+    )
+    search_params = {"limit": 10, "q": search_q, "sort": "date"}
+    search_url, params, headers = Search.build_request(
+        request.get_host(), search_params, access_token=request.access_token
+    )
+    request.view_requests.append(
+        grequests.get(search_url, params=params, headers=headers)
+    )
 
     try:
         responses = response_list_to_dict(grequests.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
 
-    user = Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None
+    user = (
+        Profile(responses[request.whoami_url], summary=False)
+        if request.whoami_url
+        else None
+    )
     profile = Profile(responses[profile_url], summary=False)
 
     view_data = {
-        'user': user,
-        'content': profile,
-        'item_type': 'profile',
-        'site': Site(responses[request.site_url]),
-        'search': Search.from_api_response(responses[search_url]),
-        'site_section': 'people'
+        "user": user,
+        "content": profile,
+        "item_type": "profile",
+        "site": Site(responses[request.site_url]),
+        "search": Search.from_api_response(responses[search_url]),
+        "site_section": "people",
     }
     return render(request, single_template, view_data)
 
 
 @require_safe
 def list(request):
-
     # Record offset for paging of profiles.
     try:
-        offset = int(request.GET.get('offset', 0))
+        offset = int(request.GET.get("offset", 0))
     except ValueError:
         offset = 0
-    top = bool(request.GET.get('top', False))
-    q = request.GET.get('q', "")
-    following = bool(request.GET.get('following', False))
-    online = bool(request.GET.get('online', False))
+    top = bool(request.GET.get("top", False))
+    q = request.GET.get("q", "")
+    following = bool(request.GET.get("following", False))
+    online = bool(request.GET.get("online", False))
 
-    profiles_url, params, headers = ProfileList.build_request(request.get_host(), offset=offset, top=top,
-        q=q, following=following, online=online, access_token=request.access_token)
+    profiles_url, params, headers = ProfileList.build_request(
+        request.get_host(),
+        offset=offset,
+        top=top,
+        q=q,
+        following=following,
+        online=online,
+        access_token=request.access_token,
+    )
 
-    request.view_requests.append(grequests.get(profiles_url, params=params, headers=headers))
+    request.view_requests.append(
+        grequests.get(profiles_url, params=params, headers=headers)
+    )
     try:
         responses = response_list_to_dict(grequests.map(request.view_requests))
     except APIException as exc:
@@ -117,25 +138,36 @@ def list(request):
         filter_name.append("sorted alphabetically")
 
     view_data = {
-        'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
-        'site': Site(responses[request.site_url]),
-        'content': profiles,
-        'pagination': build_pagination_links(responses[profiles_url]['profiles']['links'], profiles.profiles),
-        'q': q,
-        'top': top,
-        'following': following,
-        'alphabet': string.ascii_lowercase,
-        'site_section': 'people',
-        'filter_name': ", ".join(filter_name),
-        'subtitle': subtitle,
-        'online': online
+        "user": (
+            Profile(responses[request.whoami_url], summary=False)
+            if request.whoami_url
+            else None
+        ),
+        "site": Site(responses[request.site_url]),
+        "content": profiles,
+        "pagination": build_pagination_links(
+            responses[profiles_url]["profiles"]["links"], profiles.profiles
+        ),
+        "q": q,
+        "top": top,
+        "following": following,
+        "alphabet": string.ascii_lowercase,
+        "site_section": "people",
+        "filter_name": ", ".join(filter_name),
+        "subtitle": subtitle,
+        "online": online,
     }
 
     return render(request, list_template, view_data)
 
 
 @require_authentication
-@require_http_methods(['GET', 'POST',])
+@require_http_methods(
+    [
+        "GET",
+        "POST",
+    ]
+)
 @cache_control(must_revalidate=True, max_age=0)
 def edit(request, profile_id):
     """
@@ -148,104 +180,129 @@ def edit(request, profile_id):
         return respond_with_error(request, exc)
     user = Profile(responses[request.whoami_url], summary=False)
     view_data = {
-        'user': user,
-        'site': Site(responses[request.site_url]),
+        "user": user,
+        "site": Site(responses[request.site_url]),
     }
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = edit_form(request.POST)
         if form.is_valid():
             # Upload new avatar if present.
-            if request.FILES.has_key('avatar'):
-                file_request = FileMetadata.from_create_form(request.FILES['avatar'])
-                file_metadata = file_request.create(request.get_host(), request.access_token, 100, 100)
+            if "avatar" in request.FILES:
+                file_request = FileMetadata.from_create_form(request.FILES["avatar"])
+                file_metadata = file_request.create(
+                    request.get_host(), request.access_token, 100, 100
+                )
                 try:
-                    Attachment.create(request.get_host(), file_metadata.file_hash, profile_id=user.id,
-                        access_token=request.access_token, file_name=request.FILES['avatar'].name)
+                    Attachment.create(
+                        request.get_host(),
+                        file_metadata.file_hash,
+                        profile_id=user.id,
+                        access_token=request.access_token,
+                        file_name=request.FILES["avatar"].name,
+                    )
                 except APIException as exc:
                     return respond_with_error(request, exc)
 
             # Update the actual profile resource.
             profile_request = Profile(form.cleaned_data)
-            profile_response = profile_request.update(request.get_host(), request.access_token)
+            profile_response = profile_request.update(
+                request.get_host(), request.access_token
+            )
 
             # Create, update or delete comment on profile (single comment acts as a bio).
-            if request.POST.has_key('markdown'):
+            if "markdown" in request.POST:
                 profile_comment = {
-                    'itemType': 'profile',
-                    'itemId': profile_response.id,
-                    'markdown': request.POST['markdown'],
-                    'inReplyTo': 0
+                    "itemType": "profile",
+                    "itemId": profile_response.id,
+                    "markdown": request.POST["markdown"],
+                    "inReplyTo": 0,
                 }
 
                 # If profile already has an attached comment update it, otherwise create a new one.
-                if hasattr(profile_response, 'profile_comment'):
-                    profile_comment['id'] = profile_response.profile_comment.id
+                if hasattr(profile_response, "profile_comment"):
+                    profile_comment["id"] = profile_response.profile_comment.id
                     comment_request = Comment.from_edit_form(profile_comment)
                     try:
-                        if profile_comment['markdown']:
-                            comment_request.update(request.get_host(), access_token=request.access_token)
+                        if profile_comment["markdown"]:
+                            comment_request.update(
+                                request.get_host(), access_token=request.access_token
+                            )
                         else:
                             # If the comment body is empty, assume the user wants to delete it.
-                            comment_request.delete(request.get_host(), request.access_token)
+                            comment_request.delete(
+                                request.get_host(), request.access_token
+                            )
                     except APIException as exc:
                         return respond_with_error(request, exc)
                 else:
-                    if profile_comment['markdown']:
+                    if profile_comment["markdown"]:
                         comment = Comment.from_create_form(profile_comment)
                         try:
                             comment.create(request.get_host(), request.access_token)
                         except APIException as exc:
                             return respond_with_error(request, exc)
 
-            return HttpResponseRedirect(reverse('single-profile', args=(profile_response.id,)))
+            return HttpResponseRedirect(
+                reverse("single-profile", args=(profile_response.id,))
+            )
         else:
-            view_data['form'] = form
+            view_data["form"] = form
             return render(request, form_template, view_data)
 
-    if request.method == 'GET':
+    if request.method == "GET":
         try:
-            user_profile = Profile.retrieve(request.get_host(), profile_id, request.access_token)
+            user_profile = Profile.retrieve(
+                request.get_host(), profile_id, request.access_token
+            )
         except APIException as exc:
             return respond_with_error(request, exc)
-        view_data['form'] = edit_form(user_profile.as_dict)
+        view_data["form"] = edit_form(user_profile.as_dict)
         return render(request, form_template, view_data)
 
 
 @require_authentication
-@require_http_methods(['POST',])
+@require_http_methods(
+    [
+        "POST",
+    ]
+)
 @cache_control(must_revalidate=True, max_age=0)
 def patch(request, profile_id):
     """
     Patch a user profile (member status).
     """
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = patch_form(request.POST)
         if form.is_valid():
             # Update the actual profile resource.
             data = {
-                'id': profile_id,
-                'member': (form.cleaned_data['member'] == 'true'),
+                "id": profile_id,
+                "member": (form.cleaned_data["member"] == "true"),
             }
             profile = Profile(data)
             profile.patch(request.get_host(), request.access_token)
-        return HttpResponseRedirect(reverse('single-profile', args=(profile_id,)))
+        return HttpResponseRedirect(reverse("single-profile", args=(profile_id,)))
 
 
 @require_authentication
-@require_http_methods(['POST',])
+@require_http_methods(
+    [
+        "POST",
+    ]
+)
 def mark_read(request):
     """
     Mark a scope (e.g. site or microcosm) as read for the authenticated user.
     """
 
     scope = {
-        'itemType': request.POST.get('item_type'),
-        'itemId': int(request.POST.get('item_id')),
+        "itemType": request.POST.get("item_type"),
+        "itemId": int(request.POST.get("item_id")),
     }
     try:
         Profile.mark_read(request.get_host(), scope, request.access_token)
     except APIException as exc:
         return respond_with_error(request, exc)
-    return HttpResponseRedirect(request.POST.get('return_path'))
+    return HttpResponseRedirect(request.POST.get("return_path"))

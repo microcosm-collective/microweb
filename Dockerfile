@@ -1,9 +1,13 @@
-FROM python:2.7
+FROM python:3.7
 
 ENV APP_HOME=/srv/www/django/microweb/
 
 
 WORKDIR ${APP_HOME}
+
+COPY sources-stretch.list /etc/apt/sources.list
+
+RUN apt-get update
 
 RUN apt-get -qq update && \
     apt-get -yq install --no-install-recommends \
@@ -17,9 +21,7 @@ RUN apt-get -qq update && \
 
 COPY requirements.txt /${APP_HOME}
 
-RUN python -m pip install --upgrade pip \
-    && pip install virtualenv \
-    && pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . /${APP_HOME}
 
@@ -44,4 +46,4 @@ USER microweb
 
 ENV PORT=80
 EXPOSE ${PORT}
-CMD python /usr/local/bin/gunicorn microweb.wsgi -b 0.0.0.0:${PORT} --forwarded-allow-ips '*' -w5
+CMD python /usr/local/bin/gunicorn microweb.wsgi -b 0.0.0.0:${PORT} --forwarded-allow-ips '*' -w5 --no-sendfile

@@ -11,4 +11,4 @@ class DateTimeEncoder(json.JSONEncoder):
         if isinstance(object, datetime.datetime):
             return object.isoformat()
         else:
-            return super(DateTimeEncoder, self).default(object)
+            return super().default(object)

@@ -2,11 +2,11 @@
 	<li><a href="{% url 'index' %}">Home</a></li>
 	{% if not skipparents %}
 		{% if content.breadcrumb %}
-			{% for key,value in content.breadcrumb.breadcrumb.iteritems %}
+			{% for key,value in content.breadcrumb.breadcrumb.items %}
 	<li><a href="{{ value.href }}">{{ value.title | safe }}</a></li>
 			{% endfor %}
 		{% else %}
-			{% for key,value in content.meta.links.iteritems reversed%}
+			{% for key,value in content.meta.links.items %}
 				{% if value.title and key != "up"%}
 	<li><a href="{{ value.href }}">{{ value.title | safe }}</a></li>
 				{% endif %}

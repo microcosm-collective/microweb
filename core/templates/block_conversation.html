@@ -23,9 +23,9 @@
 				{% endif %}
 				{% if showForum %}
 				<div class="cell-forum">
-					in 
+					in
 					{% if item.breadcrumb %}
-						{% for key,value in item.breadcrumb.breadcrumb.iteritems %}
+						{% for key,value in item.breadcrumb.breadcrumb.items %}
 							<a href="{{ value.href }}">{{ value.title | safe }}</a> {% if not forloop.last %}/{% endif %}
 						{% endfor %}
 					{% else %}
