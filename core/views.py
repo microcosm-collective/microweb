@@ -297,7 +297,7 @@ class ErrorView(object):
         view_data = build_error_view_data(request)
 
         # Provide detailed error if returned in the response.
-        if hasattr(exception, 'detail'):
+        if hasattr(exception, 'detail') and isinstance(exception.detail, dict):
             if 'errorDetail' in exception.detail:
                 view_data['detail'] = exception.detail['errorDetail']
 
