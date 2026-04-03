@@ -142,6 +142,9 @@ dokku config:set --no-restart microweb MEMCACHE_HOST=dokku-memcached-microweb-me
 dokku config:set --no-restart microweb CLIENT_SECRET=123456
 # use single quotes if you have special chars!
 dokku config:set --no-restart microweb SECRET_KEY='!aoeui12345'
+# Python library `requests` ships its own CA bundle which is outdated and fails to verify
+# modern certificates (in Python 2.7). Override it to use the system CA bundle instead.
+dokku config:set --no-restart microweb REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 ```
 
 Add some nginx config:
