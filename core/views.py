@@ -51,6 +51,39 @@ from core.api.resources import build_url
 
 logger = logging.getLogger('core.views')
 
+
+def build_error_view_data(request, include_user=False):
+    """
+    Best-effort context for error pages. Unknown hosts should not trigger a second failure.
+    """
+
+    view_data = {}
+    view_requests = []
+    whoami_url = None
+    site_url = None
+
+    try:
+        if include_user and request.COOKIES.has_key('access_token'):
+            request.access_token = request.COOKIES['access_token']
+            whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
+            view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
+
+        site_url, params, headers = Site.build_request(request.get_host())
+        view_requests.append(grequests.get(site_url, params=params, headers=headers))
+    except APIException as exc:
+        logger.warning('Unable to build error view context for host %s: %s' % (request.get_host(), str(exc)))
+        return view_data
+
+    responses = response_list_to_dict(grequests.map(view_requests))
+
+    if whoami_url and responses.has_key(whoami_url):
+        view_data['user'] = Profile(responses[whoami_url], summary=False)
+
+    if site_url and responses.has_key(site_url):
+        view_data['site'] = Site(responses[site_url])
+
+    return view_data
+
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     """
     generates identifies that are used as cache busters in querystrings
@@ -249,72 +282,19 @@ class LegalView(object):
 class ErrorView(object):
     @staticmethod
     def not_found(request):
-        view_data = {}
-        view_requests = []
-
-        if request.COOKIES.has_key('access_token'):
-            request.access_token = request.COOKIES['access_token']
-            whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
-            view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
-
-        site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
-
-        responses = response_list_to_dict(grequests.map(view_requests))
-        if request.whoami_url:
-            profile = Profile(responses[whoami_url], summary=False)
-            view_data['user'] = profile
-
-        site = Site(responses[site_url])
-        view_data['site'] = site
-
+        view_data = build_error_view_data(request, include_user=True)
         context = RequestContext(request, view_data)
         return HttpResponseNotFound(loader.get_template('404.html').render(context))
 
     @staticmethod
     def forbidden(request):
-        view_data = {}
-        view_requests = []
-
-        if request.COOKIES.has_key('access_token'):
-            request.access_token = request.COOKIES['access_token']
-            whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
-            view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
-
-        site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
-
-        responses = response_list_to_dict(grequests.map(view_requests))
-        if request.whoami_url:
-            profile = Profile(responses[whoami_url], summary=False)
-            view_data['user'] = profile
-
-        site = Site(responses[site_url])
-        view_data['site'] = site
-
+        view_data = build_error_view_data(request, include_user=True)
         context = RequestContext(request, view_data)
         return HttpResponseForbidden(loader.get_template('403.html').render(context))
 
     @staticmethod
     def server_error(request, exception=None):
-        view_data = {}
-        view_requests = []
-
-        # if request.COOKIES.has_key('access_token'):
-        #     request.access_token = request.COOKIES['access_token']
-        #     whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
-        #     view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
-
-        site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
-
-        responses = response_list_to_dict(grequests.map(view_requests))
-        # if request.whoami_url:
-        #     profile = Profile(responses[whoami_url], summary=False)
-        #     view_data['user'] = profile
-
-        site = Site(responses[site_url])
-        view_data['site'] = site
+        view_data = build_error_view_data(request)
 
         # Provide detailed error if returned in the response.
         if hasattr(exception, 'detail'):
@@ -326,13 +306,7 @@ class ErrorView(object):
 
     @staticmethod
     def requires_login(request):
-        view_data = {}
-        view_requests = []
-
-        site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
-        responses = response_list_to_dict(grequests.map(view_requests))
-        view_data['site'] = Site(responses[site_url])
+        view_data = build_error_view_data(request)
         view_data['logout'] = True
 
         context = RequestContext(request, view_data)

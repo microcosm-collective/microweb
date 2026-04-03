@@ -19,6 +19,8 @@ from core.api.resources import Site
 from core.api.resources import Event
 from core.api.resources import build_url
 from core.api.exceptions import APIException
+from core.middleware.context import ContextMiddleware
+from core.views import ErrorView
 
 TEST_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -203,3 +205,35 @@ class ResourceTests(unittest.TestCase):
     def testSiteInit(self):
         data = json.loads(open(os.path.join(TEST_ROOT, 'data', 'site.json')).read())['data']
         Site(data)
+
+
+class ErrorHandlingTests(unittest.TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    @patch('core.middleware.context.Site.build_request')
+    def testContextMiddlewareReturns404ForUnknownHost(self, mock_build_request):
+        request = self.factory.get('/', HTTP_HOST='139.162.251.45')
+        mock_build_request.side_effect = APIException('Error resolving CNAME 139.162.251.45', 404)
+
+        middleware = ContextMiddleware()
+        response = middleware.process_request(request)
+
+        assert response.status_code == 404
+
+    @patch('core.views.loader.get_template')
+    @patch('core.views.Site.build_request')
+    def testServerErrorDoesNotRecurseOnUnknownHost(self, mock_build_request, mock_get_template):
+        request = self.factory.get('/', HTTP_HOST='139.162.251.45')
+        mock_build_request.side_effect = APIException('Error resolving CNAME 139.162.251.45', 404)
+
+        class DummyTemplate(object):
+            def render(self, context):
+                return 'server error'
+
+        mock_get_template.return_value = DummyTemplate()
+        response = ErrorView.server_error(request)
+
+        assert response.status_code == 500
+        assert response.content == 'server error'
