@@ -279,6 +279,10 @@ class Site(object):
     def resolve_cname(host):
         # TODO: separation of root site API and others
         url = settings.API_SCHEME + settings.API_DOMAIN_NAME
+
+        hostsplit = host.split(":", 1)
+        host = hostsplit[0]
+
         path_fragments = [settings.API_PATH, settings.API_VERSION, 'hosts', host]
         url += join_path_fragments(path_fragments)
         response = requests.get(url)
