@@ -179,7 +179,13 @@ def process_attachments(request, comment):
     if request.POST.get('attachments-delete'):
         attachments_delete = request.POST.get('attachments-delete').split(",")
         for fileHash in attachments_delete:
-            Attachment.delete(request.get_host(), Comment.api_path_fragment, comment.id, fileHash)
+            Attachment.delete(
+                request.get_host(),
+                Comment.api_path_fragment,
+                comment.id,
+                fileHash,
+                access_token=request.access_token,
+            )
 
     # Check if any files have been uploaded with the request.
     if request.FILES.has_key('attachments'):
