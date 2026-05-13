@@ -2,12 +2,16 @@
 
 ## Create server
 
-* make a server (on Linode)
-  * needs at least 2GB RAM for the build step or it crashes out (with code 137 - OOM)
+* Make a server (on Linode).
+  * Needs at least 2GB RAM for the build step or it crashes out (with code 137 - OOM).
+  * Select the "Private IP" add-on.
+  * Select "microcosm.cc" as the firewall.
+* Set up the DNS in Cloudflare.
+  * Add record for `wpy03`, use its public IP address, no CF proxying, default TTL.
 
 ### Internal ip address
 
-The server needs an ip address on the internal network. This address should be added to `/etc/hosts` on other relevant servers (e.g. lb/api), e.g.:
+The new server's private IP address should be added to `/etc/hosts` on `lb` & `api`, e.g.:
 
 ```
 192.168.0.11 wpy03.microcosm.cc
@@ -84,6 +88,10 @@ The uid should match the one in the Dockerfile, which currently looks like:
 RUN useradd -Ms /bin/bash -u1100 microweb
 USER microweb
 ```
+
+## Update hosts file
+
+Copy `/etc/hosts` from an existing `wpy*` server - it contains a set of overrides to send traffic direct to the load balancer's private IP.
 
 ## Install Dokku
 
