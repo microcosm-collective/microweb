@@ -8,6 +8,7 @@ from django.http import HttpResponseNotFound
 from django.http import HttpResponseRedirect
 
 from core.api.exceptions import APIException
+from core.api.resources import is_ip_address
 from core.api.resources import Site
 from core.api.resources import WhoAmI
 
@@ -48,6 +49,9 @@ class ContextMiddleware():
             request.view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
         except APIException as e:
             if e.status_code in [400, 404]:
-                logger.warning('Rejecting unresolved host %s: %s' % (request.get_host(), str(e)))
+                if is_ip_address(request.get_host()):
+                    logger.info('Rejecting IP host header %s' % request.get_host())
+                else:
+                    logger.warning('Rejecting unresolved host %s: %s' % (request.get_host(), str(e)))
                 return HttpResponseNotFound()
             raise

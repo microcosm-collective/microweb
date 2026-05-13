@@ -46,6 +46,7 @@ from core.api.resources import Profile
 from core.api.resources import response_list_to_dict
 from core.api.resources import Site
 from core.api.resources import WhoAmI
+from core.api.resources import is_ip_address
 
 from core.api.resources import build_url
 
@@ -71,7 +72,10 @@ def build_error_view_data(request, include_user=False):
         site_url, params, headers = Site.build_request(request.get_host())
         view_requests.append(grequests.get(site_url, params=params, headers=headers))
     except APIException as exc:
-        logger.warning('Unable to build error view context for host %s: %s' % (request.get_host(), str(exc)))
+        if is_ip_address(request.get_host()):
+            logger.info('Skipping error view context for IP host header %s' % request.get_host())
+        else:
+            logger.warning('Unable to build error view context for host %s: %s' % (request.get_host(), str(exc)))
         return view_data
 
     responses = response_list_to_dict(grequests.map(view_requests))

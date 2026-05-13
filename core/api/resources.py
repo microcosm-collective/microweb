@@ -1,4 +1,5 @@
 import json
+import socket
 
 from django.conf import settings
 
@@ -18,6 +19,9 @@ import pylibmc as memcache
 
 logger = logging.getLogger('microcosm.middleware')
 mc = memcache.Client(['%s:%d' % (settings.MEMCACHE_HOST, settings.MEMCACHE_PORT)])
+
+NEGATIVE_CNAME_CACHE_VALUE = '__missing__'
+NEGATIVE_CNAME_CACHE_TTL = 86400
 
 RESOURCE_PLURAL = {
     'event': 'events',
@@ -47,6 +51,29 @@ def build_url(host, path_fragments):
     return get_subdomain_url(host) + join_path_fragments(path_fragments)
 
 
+def split_host_port(host):
+    if host.startswith('['):
+        return host[1:].split(']', 1)[0]
+    return host.split(':', 1)[0]
+
+
+def is_ip_address(host):
+    host = split_host_port(host)
+
+    for family in [socket.AF_INET, socket.AF_INET6]:
+        try:
+            socket.inet_pton(family, host)
+            return True
+        except (AttributeError, socket.error):
+            pass
+
+    try:
+        socket.inet_aton(host)
+        return host.count('.') == 3
+    except socket.error:
+        return False
+
+
 def get_subdomain_url(host):
     """
     urljoin and os.path.join don't behave exactly as we want, so
@@ -72,9 +99,24 @@ def get_subdomain_url(host):
         except memcache.Error as e:
             logger.error('Memcached error: %s' % str(e))
 
+        if resolved_name == NEGATIVE_CNAME_CACHE_VALUE:
+            raise APIException('Cached unresolved host %s' % host, 404)
+
         if resolved_name is None:
-            resolved_name = Site.resolve_cname(host)
-            mc.set(mc_key, resolved_name)
+            try:
+                resolved_name = Site.resolve_cname(host)
+            except APIException as e:
+                if e.status_code in [400, 404]:
+                    try:
+                        mc.set(mc_key, NEGATIVE_CNAME_CACHE_VALUE, time=NEGATIVE_CNAME_CACHE_TTL)
+                    except memcache.Error as cache_error:
+                        logger.error('Memcached error: %s' % str(cache_error))
+                raise
+
+            try:
+                mc.set(mc_key, resolved_name)
+            except memcache.Error as e:
+                logger.error('Memcached error: %s' % str(e))
         return settings.API_SCHEME + resolved_name
 
 
@@ -280,8 +322,9 @@ class Site(object):
         # TODO: separation of root site API and others
         url = settings.API_SCHEME + settings.API_DOMAIN_NAME
 
-        hostsplit = host.split(":", 1)
-        host = hostsplit[0]
+        host = split_host_port(host)
+        if is_ip_address(host):
+            raise APIException('Refusing to resolve IP host %s' % host, 404)
 
         path_fragments = [settings.API_PATH, settings.API_VERSION, 'hosts', host]
         url += join_path_fragments(path_fragments)
