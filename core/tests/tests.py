@@ -3,11 +3,11 @@ import string
 import json
 import os
 
-from django.utils import unittest
+import unittest
 from django.conf import settings
 from django.test.client import RequestFactory
 
-from mock import patch
+from unittest.mock import patch
 
 from core.views import build_pagination_links
 from core.views import build_newest_comment_link
@@ -31,8 +31,8 @@ TEST_ROOT = os.path.dirname(os.path.abspath(__file__))
 def generate_location():
     # Construct a random subdomain string
     subdomain = ''
-    for x in xrange(10):
-        subdomain += random.choice(string.lowercase)
+    for x in range(10):
+        subdomain += random.choice(string.ascii_lowercase)
     return '%s.microcosm.app' % subdomain
 
 
@@ -117,7 +117,7 @@ class BuildURLTests(unittest.TestCase):
             build_url('missing.example.org', ['resource'])
 
         assert context.exception.status_code == 404
-        mock_mc.set.assert_called_once_with('missing.example.org_cname', NEGATIVE_CNAME_CACHE_VALUE, time=NEGATIVE_CNAME_CACHE_TTL)
+        mock_mc.set.assert_called_once_with('missing.example.org_cname', NEGATIVE_CNAME_CACHE_VALUE, timeout=NEGATIVE_CNAME_CACHE_TTL)
 
 
 class PaginationTests(unittest.TestCase):
@@ -258,7 +258,7 @@ class ErrorHandlingTests(unittest.TestCase):
         request = self.factory.get('/', HTTP_HOST='139.162.251.45')
         mock_build_request.side_effect = APIException('Error resolving CNAME 139.162.251.45', 404)
 
-        middleware = ContextMiddleware()
+        middleware = ContextMiddleware(lambda r: None)
         response = middleware.process_request(request)
 
         assert response.status_code == 404
@@ -270,11 +270,11 @@ class ErrorHandlingTests(unittest.TestCase):
         mock_build_request.side_effect = APIException('Error resolving CNAME 139.162.251.45', 404)
 
         class DummyTemplate(object):
-            def render(self, context):
+            def render(self, context, request=None):
                 return 'server error'
 
         mock_get_template.return_value = DummyTemplate()
         response = ErrorView.server_error(request)
 
         assert response.status_code == 500
-        assert response.content == 'server error'
+        assert response.content == b'server error'
