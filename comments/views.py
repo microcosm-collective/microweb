@@ -1,9 +1,9 @@
-import grequests
+from core.api import fetch
 import logging
 
-from urlparse import urlunparse
+from urllib.parse import urlunparse
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.exceptions import ValidationError
 
 from django.http import HttpResponse
@@ -46,13 +46,13 @@ def fill_from_get(request, initial):
     Populate comment form fields from GET parameters.
     """
 
-    if request.GET.has_key('itemId'):
+    if 'itemId' in request.GET:
         initial['itemId'] = int(request.GET.get('itemId', None))
-    if request.GET.has_key('itemType'):
+    if 'itemType' in request.GET:
         if request.GET['itemType'] not in COMMENTABLE_ITEM_TYPES:
             raise ValueError
         initial['itemType'] = request.GET.get('itemType', None)
-    if request.GET.has_key('inReplyTo'):
+    if 'inReplyTo' in request.GET:
         initial['inReplyTo'] = int(request.GET.get('inReplyTo', None))
 
     return initial
@@ -86,9 +86,9 @@ def single(request, comment_id):
 
     url, params, headers = Comment.build_request(request.get_host(), id=comment_id,
                                                  access_token=request.access_token)
-    request.view_requests.append(grequests.get(url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(url, params=params, headers=headers))
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     content = Comment.from_api_response(responses[url])
@@ -135,7 +135,7 @@ def create(request):
         # If invalid, load single comment view showing validation errors.
         if not form.is_valid():
             try:
-                responses = response_list_to_dict(grequests.map(request.view_requests))
+                responses = response_list_to_dict(fetch.map(request.view_requests))
             except APIException as exc:
                 return respond_with_error(request, exc)
             view_data = {
@@ -156,7 +156,7 @@ def create(request):
             process_attachments(request, comment)
         except ValidationError:
             try:
-                responses = response_list_to_dict(grequests.map(request.view_requests))
+                responses = response_list_to_dict(fetch.map(request.view_requests))
             except APIException as exc:
                 return respond_with_error(request, exc)
             comment_form = CommentForm(
@@ -189,7 +189,7 @@ def edit(request, comment_id):
     Edit a comment.
     """
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     view_data = {
@@ -210,7 +210,7 @@ def edit(request, comment_id):
                 process_attachments(request, comment)
             except ValidationError:
                 try:
-                    responses = response_list_to_dict(grequests.map(request.view_requests))
+                    responses = response_list_to_dict(fetch.map(request.view_requests))
                 except APIException as exc:
                     return respond_with_error(request, exc)
                 comment_form = CommentForm(

@@ -1,9 +1,8 @@
-from django.conf.urls import url
-from django.conf.urls import patterns
+from django.urls import re_path
 
 from search import views
 
 
-urlpatterns = patterns('',
-   url(r'^search/$', views.single, name='single-search'),
-)
+urlpatterns = [
+    re_path(r'^search/$', views.single, name='single-search'),
+]

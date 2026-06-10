@@ -82,7 +82,7 @@
 			{% endif %}
 
 			{% if not comment.meta.created_by.id == user.id %}
-				{% if content.meta.flags.open and item_type = 'conversation' or content.meta.flags.open and item_type = 'event' or item_type = 'huddle' %}
+				{% if content.meta.flags.open and item_type == 'conversation' or content.meta.flags.open and item_type == 'event' or item_type == 'huddle' %}
 					<a class="insertReplyBox comment-item-footer-btn comment-item-footer-btn-first comment-item-footer-btn-last comment-reply-button" data-action="{% url 'create-comment' %}" data-ref="{{ comment.id }}" href="javascript:void 0" ><span class="sprite sprite-arrow-left"></span> Reply</a>
 				{% endif %}
 			{% endif %}
