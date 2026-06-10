@@ -1,5 +1,10 @@
 # Compiled python files.
 *.pyc
+__pycache__/
+
+# Virtualenvs.
+ENV/
+ENV3/
 
 # IDE project files.
 .idea/
