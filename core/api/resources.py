@@ -1,4 +1,5 @@
 import json
+import mimetypes
 import socket
 
 from django.conf import settings
@@ -1970,7 +1971,13 @@ class FileMetadata(object):
     @classmethod
     def from_create_form(cls, file_upload):
         file_metadata = cls()
-        file_metadata.file = {file_upload.name: file_upload.read()}
+        # The API requires a mime type on the multipart file part. Use the
+        # browser-supplied content type, falling back to a guess from the
+        # file name.
+        content_type = getattr(file_upload, 'content_type', None) \
+            or mimetypes.guess_type(file_upload.name)[0] \
+            or 'application/octet-stream'
+        file_metadata.file = {file_upload.name: (file_upload.name, file_upload.read(), content_type)}
         return file_metadata
 
     @classmethod
