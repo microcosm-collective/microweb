@@ -176,10 +176,10 @@
 												class="form-control"
 												name="q"
 												placeholder="Search"
-												{% if content.query.q and not site_section == 'today' %}value="{{content.query.q | escape}}"{% endif %}
+												{% if request.search_query and not site_section == 'today' %}value="{{ request.search_query | escape }}"{% endif %}
 												tabindex="1"
 											/>
-											{% if not content.query or site_section == 'today' %}
+											{% if not request.search_query or site_section == 'today' %}
 											<input type="hidden" name="defaults" value="true" />
 											{% endif %}
 											<span class="input-group-btn">
@@ -328,7 +328,8 @@
 						primaryColor: '{{ site.link_color }}',
 						socialBigButtons: true,
 						authParams: {
-							state: '{{ request.get_full_path }}'
+							state: '{{ request.get_full_path }}',
+							scope: 'openid profile email'
 						},
 						callbackURL: '{{ site.site_url }}/auth0login/',
 						responseType: 'code'

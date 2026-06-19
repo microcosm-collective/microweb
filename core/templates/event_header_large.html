@@ -69,7 +69,7 @@
 						<div class="item-event-location" itemprop="location" itemscope itemtype="http://schema.org/Place">
 							{% if content.where %}
 								<span itemprop="name">{{ content.where | safe }}</span>
-								{% if content.lat != 0 and conten.lon != 0 %}
+								{% if content.lat != 0 and content.lon != 0 %}
 								<span itemprop="geo" itemscope itemtype="http://schema.org/GeoCoordinates" style="display:none"><span itemprop="latitude" content="{{ content.lat }}"></span><span itemprop="longitude" content="{{ content.lon }}"></span></span>
 								{% endif %}
 							{% else %}

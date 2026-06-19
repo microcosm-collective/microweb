@@ -36,23 +36,23 @@
 				data-initial="{{ pagination.page }}"
 				data-limit="{{ pagination.limit }}"
 				data-max="{{ pagination.total_pages }}"
-			>
-				<input
-					type="text"
-					min="1"
-					value="{{ pagination.page }}"
+				>
+					<input
+						type="text"
+						min="1"
+						value="{{ pagination.page }}"
 					max="{{ pagination.total_pages }}"
 					step="1"
 					pattern="\d*"
 					title="Enter the page number to jump to"
 					class="form-control"
-				/>
-				<input name="offset" type="hidden" />
-				{% if content.query and content.query.searched %}
-				<input name="q" type="hidden" value="{{ content.query.searched }}" />
-				{% endif %}
-			</form>
-			of {{ pagination.total_pages | default:1 | intcomma }}
+					/>
+					<input name="offset" type="hidden" />
+					{% if request.search_query %}
+					<input name="q" type="hidden" value="{{ request.search_query }}" />
+					{% endif %}
+				</form>
+				of {{ pagination.total_pages | default:1 | intcomma }}
 		{% else %}
 			Page 1 of 1
 		{% endif %}
@@ -83,8 +83,8 @@
 					class="form-control"
 				/>
 				<input name="offset" type="hidden" />
-				{% if content.query and content.query.searched %}
-				<input name="q" type="hidden" value="{{ content.query.searched }}" />
+				{% if request.search_query %}
+				<input name="q" type="hidden" value="{{ request.search_query }}" />
 				{% endif %}
 				/ {{ pagination.total_pages | default:1 | intcomma }}
 			</form>

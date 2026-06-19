@@ -46,6 +46,15 @@ COMMENTABLE_ITEM_TYPES = [
 ]
 
 
+class TemplateSafeDict(dict):
+    """
+    Match Django template lookup semantics without raising for optional API keys.
+    """
+
+    def __missing__(self, key):
+        return None
+
+
 def build_url(host, path_fragments):
     path_fragments = [settings.API_PATH, settings.API_VERSION] + path_fragments
     return get_subdomain_url(host) + join_path_fragments(path_fragments)
@@ -276,6 +285,11 @@ class Site(object):
     api_path_fragment = 'site'
 
     def __init__(self, data):
+        self.auth0_client_id = None
+        self.auth0_domain = None
+        self.background_position = None
+        self.background_url = None
+        self.favicon_url = None
         self.site_id = data['siteId']
         self.site_url = data['siteURL']
         self.url = data['siteURL']
@@ -407,6 +421,15 @@ class Profile(object):
         be a PUT or PATCH operation and not have all the expected keys.
         """
 
+        self.avatar = None
+        self.comment_count = 0
+        self.created = None
+        self.email = None
+        self.is_member = False
+        self.item_count = 0
+        self.last_active = None
+        self.member = False
+        self.profile_comment = None
         if data.get('id'): self.id = data['id']
         if data.get('siteId'): self.site_id = data['siteId']
         if data.get('userId'): self.user_id = data['userId']
@@ -414,7 +437,9 @@ class Profile(object):
         if data.get('profileName'): self.profile_name = data['profileName']
         if data.get('visible'): self.visible = data['visible']
         if data.get('avatar'): self.avatar = data['avatar']
-        if data.get('member'): self.is_member = data['member']
+        if data.get('member'):
+            self.is_member = data['member']
+            self.member = data['member']
         if data.get('meta'): self.meta = Meta(data['meta'])
         if data.get('profileComment'):
                 self.profile_comment = Comment.from_summary(data['profileComment'])
@@ -542,6 +567,15 @@ class Microcosm(APIResource):
     @classmethod
     def from_api_response(cls, data):
         microcosm = Microcosm()
+        microcosm.breadcrumb = None
+        microcosm.children = None
+        microcosm.description = None
+        microcosm.isConfidential = None
+        microcosm.item_types = []
+        microcosm.logoUrl = None
+        microcosm.most_recent_update = None
+        microcosm.total_comments = 0
+        microcosm.total_items = 0
         if data.get('id'): microcosm.id = data['id']
         if data.get('parentId'):
             microcosm.parent_id = data['parentId']
@@ -954,6 +988,10 @@ class Item(object):
     @classmethod
     def from_summary(cls, data):
         item = cls()
+        item.breadcrumb = None
+        item.children = None
+        item.highlight = None
+        item.unread = False
         item.id = data['item']['id']
         item.item_type = data['itemType']
         if data['item'].get('microcosmId'):
@@ -1041,12 +1079,39 @@ class Meta(object):
     """
 
     def __init__(self, data):
+        flag_defaults = {
+            'deleted': False,
+            'ignored': False,
+            'moderated': False,
+            'open': False,
+            'sendEmail': False,
+            'sticky': False,
+            'unread': False,
+            'watched': False,
+        }
+        stat_defaults = {
+            'onlineProfiles': 0,
+            'totalComments': 0,
+            'totalConversations': 0,
+            'totalEvents': 0,
+            'totalProfiles': 0,
+            'unreadHuddles': 0,
+        }
+        self.children = []
+        self.created = None
+        self.created_by = None
+        self.edited = None
+        self.edited_by = None
+        self.flags = TemplateSafeDict(flag_defaults)
+        self.links = TemplateSafeDict()
+        self.parents = []
+        self.stats = TemplateSafeDict(stat_defaults)
         if data.get('created'): self.created = (parse_timestamp(data['created']))
         if data.get('createdBy'): self.created_by = Profile(data['createdBy'])
         if data.get('edited'): self.edited = (parse_timestamp(data['edited']))
         if data.get('editedBy'): self.edited_by = Profile(data['editedBy'])
-        self.flags = data.get('flags', {})
-        self.permissions = PermissionSet(data['permissions']) if data.get('permissions') else PermissionSet.empty()
+        if data.get('flags'): self.flags.update(data['flags'])
+        self.permissions = PermissionSet(data.get('permissions', {}))
         if data.get('inReplyTo'):
             self.parents = []
             self.parents.append(Comment.from_summary(data['inReplyTo']))
@@ -1055,14 +1120,12 @@ class Meta(object):
             for item in data['replies']:
                 self.children.append(Comment.from_summary(item))
         if data.get('links'):
-            self.links = {}
             for item in data['links']:
                 if 'title' in item:
                     self.links[item['rel']] = {'href': api_url_to_gui_url(item['href']), 'title': item['title']}
                 else:
                     self.links[item['rel']] = {'href': api_url_to_gui_url(item['href'])}
         if data.get('stats'):
-            self.stats = {}
             for stat in data['stats']:
                 if stat.get('metric'):
                     self.stats[stat['metric']] = stat['value']
@@ -1074,22 +1137,18 @@ class PermissionSet(object):
     """
 
     def __init__(self, data):
-        self.create    = data['create']
-        self.read      = data['read']
-        self.update    = data['update']
-        self.delete    = data['delete']
-        self.guest     = data['guest']
-        self.moderator = data['moderator']
-        self.owner     = data['owner']
-        self.admin     = data['siteOwner']
-        self.siteOwner = data['siteOwner']
-
-        if data.get('banned'):
-            self.banned = data['banned']
-        if data.get('closeOwn'):
-            self.close = data['closeOwn']
-        if data.get('openOwn'):
-            self.open = data['openOwn']
+        self.create    = data.get('create', False)
+        self.read      = data.get('read', False)
+        self.update    = data.get('update', False)
+        self.delete    = data.get('delete', False)
+        self.guest     = data.get('guest', False)
+        self.moderator = data.get('moderator', False)
+        self.owner     = data.get('owner', False)
+        self.admin     = data.get('siteOwner', False)
+        self.siteOwner = data.get('siteOwner', False)
+        self.banned    = data.get('banned', False)
+        self.close     = data.get('closeOwn', False)
+        self.open      = data.get('openOwn', False)
 
     @classmethod
     def empty(cls):
@@ -1408,6 +1467,13 @@ class Conversation(APIResource):
     @classmethod
     def from_summary(cls, data):
         conversation = cls()
+        conversation.breadcrumb = None
+        conversation.highlight = None
+        conversation.is_deleted = False
+        conversation.last_comment_created = None
+        conversation.last_comment_created_by = None
+        conversation.last_comment_id = None
+        conversation.unread = False
         conversation.id = data['id']
         conversation.microcosm_id = data['microcosmId']
         conversation.title = data['title']
@@ -1506,6 +1572,13 @@ class Huddle(APIResource):
     @classmethod
     def from_summary(cls, data):
         huddle = cls()
+        huddle.breadcrumb = None
+        huddle.isConfidential = None
+        huddle.last_comment_created = None
+        huddle.last_comment_created_by = None
+        huddle.last_comment_id = None
+        huddle.total_comments = 0
+        huddle.unread = False
         huddle.id = data['id']
         huddle.title = data['title']
         if data.get('lastCommentId'): huddle.last_comment_id = data['lastCommentId']
@@ -1634,6 +1707,25 @@ class Event(APIResource):
     @classmethod
     def from_summary(cls, data):
         event = cls()
+        event.attending = False
+        event.breadcrumb = None
+        event.duration = None
+        event.east = None
+        event.highlight = None
+        event.is_deleted = False
+        event.last_comment_created = None
+        event.last_comment_created_by = None
+        event.last_comment_id = None
+        event.lat = None
+        event.lon = None
+        event.north = None
+        event.rsvp_attend = 0
+        event.rsvp_spaces = 0
+        event.south = None
+        event.unread = False
+        event.west = None
+        event.when = None
+        event.where = None
         event.id = data['id']
         event.microcosm_id = data['microcosmId']
         event.title = data['title']
@@ -1682,8 +1774,6 @@ class Event(APIResource):
 
         if event.meta.flags.get('attending'):
             event.attending = event.meta.flags['attending']
-        else:
-            event.attending = False
 
         return event
 
@@ -1850,6 +1940,11 @@ class Comment(APIResource):
     @classmethod
     def from_api_response(cls, data):
         comment = cls()
+        comment.attachments = []
+        comment.description = None
+        comment.first_line = None
+        comment.in_reply_to = None
+        comment.title = None
         comment.id = data['id']
         comment.item_type = data['itemType']
         comment.item_id = data['itemId']
@@ -2136,11 +2231,27 @@ class Search(object):
     @classmethod
     def from_api_response(cls, data):
         search = cls()
-        search.query = data['query']
+        search.query = TemplateSafeDict({
+            'authorId': None,
+            'eventAfter': None,
+            'eventBefore': None,
+            'following': False,
+            'forumId': [],
+            'has': [],
+            'id': [],
+            'inTitle': False,
+            'q': '',
+            'searched': '',
+            'since': None,
+            'sort': '',
+            'type': [],
+            'until': None,
+        })
+        search.query.update(data['query'])
 
         search.type = []
-        if data['query'].get('type'):
-            for t in data['query']['type']:
+        if search.query.get('type'):
+            for t in search.query['type']:
                 search.type.append(t)
 
         if data.get('timeTakenInMs'):

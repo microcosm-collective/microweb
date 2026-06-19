@@ -53,6 +53,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.template.context_processors.static',
+                'core.context_processors.site_context',
             ],
         },
     },

@@ -36,6 +36,7 @@ class ContextMiddleware:
         request.access_token = None
         request.whoami_url = ''
         request.view_requests = []
+        request.search_query = request.GET.get('q', '')
 
         try:
             if 'access_token' in request.COOKIES:
