@@ -81,8 +81,10 @@ class BuildURLTests(unittest.TestCase):
         with self.assertRaises(APIException):
             build_url((BuildURLTests.subdomain_key + 'example.org'), ['resource', '1', 'ex/tra'])
 
+    @patch('core.api.resources.mc')
     @patch('requests.get')
-    def testRejectsIpHostsWithoutLookup(self, mock_get):
+    def testRejectsIpHostsWithoutLookup(self, mock_get, mock_mc):
+        mock_mc.get.return_value = None
         with self.assertRaises(APIException) as context:
             build_url('139.162.251.45', ['resource'])
 

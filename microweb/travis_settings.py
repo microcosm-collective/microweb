@@ -92,6 +92,8 @@ INSTALLED_APPS = (
     'search',
     'trending',
     'moderation',
+    'ignored',
+    'today',
     'redirect',
 )
 
