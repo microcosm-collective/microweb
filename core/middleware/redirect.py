@@ -55,7 +55,7 @@ class DomainRedirectMiddleware:
                     # HTTP 400 indicates a non-existent site.
                     if e.status_code == 404:
                         return HttpResponseRedirect('http://microcosm.app')
-                    logger.error('APIException: %s' % e.message)
+                    logger.error('APIException: %s' % str(e))
                     return HttpResponseRedirect(reverse('server-error'))
                 except RequestException as e:
                     logger.error('RequestException: %s' % str(e))
