@@ -278,6 +278,7 @@ class Site(object):
     def __init__(self, data):
         self.site_id = data['siteId']
         self.site_url = data['siteURL']
+        self.url = data['siteURL']
         self.title = data['title']
         self.description = data['description']
         self.subdomain_key = data['subdomainKey']
@@ -1017,8 +1018,7 @@ class Breadcrumb(object):
     def __init__(self, crumbs):
         self.breadcrumb = {}
         for item in crumbs:
-            crumb = {'href': api_url_to_gui_url(item['href'])}
-            if 'title' in item: crumb['title'] = item['title']
+            crumb = {'href': api_url_to_gui_url(item['href']), 'title': item.get('title'), 'logoUrl': item.get('logoUrl')}
             self.breadcrumb[item['rel'] + str(item['level'])] = crumb
 
 class ChildLinks(object):
@@ -1030,9 +1030,7 @@ class ChildLinks(object):
         self.children = {}
         seq = 1000
         for item in children:
-            link = {'href': api_url_to_gui_url(item['href'])}
-            if 'title' in item: link['title'] = item['title']
-            if 'logoUrl' in item: link['logoUrl'] = item['logoUrl']
+            link = {'href': api_url_to_gui_url(item['href']), 'title': item.get('title'), 'logoUrl': item.get('logoUrl')}
             self.children[item['rel'] + str(seq)] = link
             seq = seq + 1
 
@@ -1047,8 +1045,8 @@ class Meta(object):
         if data.get('createdBy'): self.created_by = Profile(data['createdBy'])
         if data.get('edited'): self.edited = (parse_timestamp(data['edited']))
         if data.get('editedBy'): self.edited_by = Profile(data['editedBy'])
-        if data.get('flags'): self.flags = data['flags']
-        if data.get('permissions'): self.permissions = PermissionSet(data['permissions'])
+        self.flags = data.get('flags', {})
+        self.permissions = PermissionSet(data['permissions']) if data.get('permissions') else PermissionSet.empty()
         if data.get('inReplyTo'):
             self.parents = []
             self.parents.append(Comment.from_summary(data['inReplyTo']))
@@ -1084,6 +1082,7 @@ class PermissionSet(object):
         self.moderator = data['moderator']
         self.owner     = data['owner']
         self.admin     = data['siteOwner']
+        self.siteOwner = data['siteOwner']
 
         if data.get('banned'):
             self.banned = data['banned']
@@ -1091,6 +1090,13 @@ class PermissionSet(object):
             self.close = data['closeOwn']
         if data.get('openOwn'):
             self.open = data['openOwn']
+
+    @classmethod
+    def empty(cls):
+        return cls({
+            'create': False, 'read': False, 'update': False, 'delete': False,
+            'guest': False, 'moderator': False, 'owner': False, 'siteOwner': False,
+        })
 
 
 class Watcher(APIResource):
