@@ -1,26 +1,19 @@
 #!/bin/bash
 
+# All Python dependencies are pure Python (no C extensions), so the only
+# system requirement is Python 3.12+ (3.14 recommended) and a local memcached
+# for the site/CNAME cache.
+
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	sudo apt-get install python2
-	curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-	sudo python2 get-pip.py
-	rm get-pip.py
-	sudo apt-get -y install build-essential fabric libevent-dev libmemcached-dev python2.7-dev python2-dev zlib1g-dev
-	sudo pip install virtualenv
+	sudo apt-get -y install python3 python3-venv memcached
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-	brew install libmemcached
-	brew install python
-	pip install fabric
-	pip install virtualenv
+	brew install python memcached
 else
 	echo -e "${COL_RED}This script only works on Linux and OSX $COL_RESET"
 	exit 1
 fi
 
-virtualenv ENV
+python3 -m venv ENV
 source ENV/bin/activate
-ORIGPATH=$PATH
-export PATH=$PWD/ENV/bin:$PATH
 pip install -r requirements.txt
 deactivate
-export PATH=$ORIGPATH

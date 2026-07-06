@@ -1,4 +1,4 @@
-import grequests
+from core.api import fetch
 import logging
 
 from django.shortcuts import render
@@ -23,9 +23,9 @@ list_template = 'trending.html'
 @require_safe
 def list(request):
     url, params, headers = Trending.build_request(request.get_host(), access_token=request.access_token)
-    request.view_requests.append(grequests.get(url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(url, params=params, headers=headers))
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     trending = Trending.from_api_response(responses[url])

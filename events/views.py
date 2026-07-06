@@ -1,10 +1,10 @@
 import datetime
-import grequests
+from core.api import fetch
 import requests
 import json
 import logging
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
 
@@ -66,16 +66,16 @@ def single(request, event_id):
     # Create request for event resource.
     event_url, event_params, event_headers = Event.build_request(request.get_host(), id=event_id,
         offset=offset, access_token=request.access_token)
-    request.view_requests.append(grequests.get(event_url, params=event_params, headers=event_headers))
+    request.view_requests.append(fetch.get(event_url, params=event_params, headers=event_headers))
 
     # Create request for event attendees.
     att_url, att_params, att_headers = Event.build_attendees_request(request.get_host(), event_id,
         request.access_token)
-    request.view_requests.append(grequests.get(att_url, params=att_params, headers=att_headers))
+    request.view_requests.append(fetch.get(att_url, params=att_params, headers=att_headers))
 
     # Perform requests and instantiate view objects.
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     event = Event.from_api_response(responses[event_url])
@@ -185,7 +185,7 @@ def create(request, microcosm_id):
     """
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     view_data = {
@@ -239,7 +239,7 @@ def create(request, microcosm_id):
                 try:
                     process_attachments(request, comment)
                 except ValidationError:
-                    responses = response_list_to_dict(grequests.map(request.view_requests))
+                    responses = response_list_to_dict(fetch.map(request.view_requests))
                     comment_form = CommentForm(
                         initial={
                             'itemId': comment.item_id,
@@ -259,7 +259,7 @@ def create(request, microcosm_id):
             return HttpResponseRedirect(reverse('single-event', args=(event_response.id,)))
 
         else:
-            print 'Event form is not valid'
+            print('Event form is not valid')
             view_data['form'] = form
             view_data['microcosm_id'] = microcosm_id
             return render(request, form_template, view_data)
@@ -279,7 +279,7 @@ def edit(request, event_id):
     """
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     view_data = {
@@ -372,7 +372,7 @@ def rsvp(request, event_id):
     Create an attendee (RSVP) for an event. An attendee can be in one of four states:
     invited, yes, maybe, no.
     """
-    responses = response_list_to_dict(grequests.map(request.view_requests))
+    responses = response_list_to_dict(fetch.map(request.view_requests))
     user = Profile(responses[request.whoami_url], summary=False)
 
     attendee = [dict(rsvp=request.POST['rsvp'],profileId=user.id),]
@@ -390,7 +390,7 @@ def rsvp(request, event_id):
 def geocode(request):
     if request.access_token is None:
         raise PermissionDenied
-    if request.GET.has_key('q'):
+    if 'q' in request.GET:
         response = GeoCode.retrieve(request.get_host(), request.GET['q'], request.access_token)
         return HttpResponse(response, content_type='application/json')
     else:

@@ -1,4 +1,4 @@
-import grequests
+from core.api import fetch
 import logging
 
 from django.shortcuts import render
@@ -23,17 +23,17 @@ single_template = 'search.html'
 @require_safe
 def single(request):
 
-    searchParams = dict(request.GET._iterlists())
+    searchParams = dict(request.GET.lists())
     if searchParams.get('defaults'):
         searchParams['inTitle'] = 'true'
         searchParams['sort'] = 'date'
 
     url, params, headers = Search.build_request(request.get_host(), params=searchParams,
         access_token=request.access_token)
-    request.view_requests.append(grequests.get(url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(url, params=params, headers=headers))
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     search = Search.from_api_response(responses[url])

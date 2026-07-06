@@ -1,12 +1,13 @@
 import json
+import mimetypes
 import socket
 
 from django.conf import settings
 
 import requests
 
-from urlparse import urlparse
-from urlparse import urlunparse
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 from dateutil.parser import parse as parse_timestamp
 
@@ -15,10 +16,9 @@ from microweb.helpers import DateTimeEncoder
 
 import logging
 
-import pylibmc as memcache
+from django.core.cache import cache as mc
 
 logger = logging.getLogger('microcosm.middleware')
-mc = memcache.Client(['%s:%d' % (settings.MEMCACHE_HOST, settings.MEMCACHE_PORT)])
 
 NEGATIVE_CNAME_CACHE_VALUE = '__missing__'
 NEGATIVE_CNAME_CACHE_TTL = 86400
@@ -96,7 +96,7 @@ def get_subdomain_url(host):
         resolved_name = None
         try:
             resolved_name = mc.get(mc_key)
-        except memcache.Error as e:
+        except Exception as e:
             logger.error('Memcached error: %s' % str(e))
 
         if resolved_name == NEGATIVE_CNAME_CACHE_VALUE:
@@ -108,14 +108,16 @@ def get_subdomain_url(host):
             except APIException as e:
                 if e.status_code in [400, 404]:
                     try:
-                        mc.set(mc_key, NEGATIVE_CNAME_CACHE_VALUE, time=NEGATIVE_CNAME_CACHE_TTL)
-                    except memcache.Error as cache_error:
+                        mc.set(mc_key, NEGATIVE_CNAME_CACHE_VALUE, timeout=NEGATIVE_CNAME_CACHE_TTL)
+                    except Exception as cache_error:
                         logger.error('Memcached error: %s' % str(cache_error))
                 raise
 
             try:
-                mc.set(mc_key, resolved_name)
-            except memcache.Error as e:
+                # timeout=None means cache forever (matching the old pylibmc
+                # no-expiry behaviour); Django's default would be 300s.
+                mc.set(mc_key, resolved_name, timeout=None)
+            except Exception as e:
                 logger.error('Memcached error: %s' % str(e))
         return settings.API_SCHEME + resolved_name
 
@@ -140,7 +142,7 @@ def discard_querystring(url):
 
 def response_list_to_dict(responses):
     """
-    Takes a list of HTTP responses as returned by grequests.map and creates a dict
+    Takes a list of HTTP responses as returned by core.api.fetch.map and creates a dict
     with the request url as the key and the response as the value. If the request
     was redirected (as shown by a history tuple on the response), the
     prior request url will be used as the key.
@@ -204,7 +206,7 @@ class APIResource(object):
         try:
             resource = response.json()
         except ValueError:
-            raise APIException('Response is not valid json:\n %s' % response.content, 500)
+            raise APIException('Response is not valid json:\n %s' % response.text, 500)
         if resource['error']:
             raise APIException(resource['error'], response.status_code, detail=resource['data'])
         if resource['data'] is None:
@@ -261,7 +263,7 @@ class APIResource(object):
         try:
             resource = response.json()
         except ValueError:
-            raise APIException('The API has returned invalid json: %s' % response.content, 500)
+            raise APIException('The API has returned invalid json: %s' % response.text, 500)
         if resource['error']:
             raise APIException(resource['error'], response.status_code)
 
@@ -276,6 +278,7 @@ class Site(object):
     def __init__(self, data):
         self.site_id = data['siteId']
         self.site_url = data['siteURL']
+        self.url = data['siteURL']
         self.title = data['title']
         self.description = data['description']
         self.subdomain_key = data['subdomainKey']
@@ -331,7 +334,9 @@ class Site(object):
         response = requests.get(url)
         if response.status_code != 200:
             raise APIException('Error resolving CNAME %s' % host, response.status_code)
-        return response.content
+        # .text, not .content: the resolved name is concatenated into a URL
+        # and cached, so it must be str, not bytes.
+        return response.text
 
 
 class User(object):
@@ -1013,8 +1018,7 @@ class Breadcrumb(object):
     def __init__(self, crumbs):
         self.breadcrumb = {}
         for item in crumbs:
-            crumb = {'href': api_url_to_gui_url(item['href'])}
-            if 'title' in item: crumb['title'] = item['title']
+            crumb = {'href': api_url_to_gui_url(item['href']), 'title': item.get('title'), 'logoUrl': item.get('logoUrl')}
             self.breadcrumb[item['rel'] + str(item['level'])] = crumb
 
 class ChildLinks(object):
@@ -1026,9 +1030,7 @@ class ChildLinks(object):
         self.children = {}
         seq = 1000
         for item in children:
-            link = {'href': api_url_to_gui_url(item['href'])}
-            if 'title' in item: link['title'] = item['title']
-            if 'logoUrl' in item: link['logoUrl'] = item['logoUrl']
+            link = {'href': api_url_to_gui_url(item['href']), 'title': item.get('title'), 'logoUrl': item.get('logoUrl')}
             self.children[item['rel'] + str(seq)] = link
             seq = seq + 1
 
@@ -1043,8 +1045,8 @@ class Meta(object):
         if data.get('createdBy'): self.created_by = Profile(data['createdBy'])
         if data.get('edited'): self.edited = (parse_timestamp(data['edited']))
         if data.get('editedBy'): self.edited_by = Profile(data['editedBy'])
-        if data.get('flags'): self.flags = data['flags']
-        if data.get('permissions'): self.permissions = PermissionSet(data['permissions'])
+        self.flags = data.get('flags', {})
+        self.permissions = PermissionSet(data['permissions']) if data.get('permissions') else PermissionSet.empty()
         if data.get('inReplyTo'):
             self.parents = []
             self.parents.append(Comment.from_summary(data['inReplyTo']))
@@ -1080,6 +1082,7 @@ class PermissionSet(object):
         self.moderator = data['moderator']
         self.owner     = data['owner']
         self.admin     = data['siteOwner']
+        self.siteOwner = data['siteOwner']
 
         if data.get('banned'):
             self.banned = data['banned']
@@ -1087,6 +1090,13 @@ class PermissionSet(object):
             self.close = data['closeOwn']
         if data.get('openOwn'):
             self.open = data['openOwn']
+
+    @classmethod
+    def empty(cls):
+        return cls({
+            'create': False, 'read': False, 'update': False, 'delete': False,
+            'guest': False, 'moderator': False, 'owner': False, 'siteOwner': False,
+        })
 
 
 class Watcher(APIResource):
@@ -1967,7 +1977,13 @@ class FileMetadata(object):
     @classmethod
     def from_create_form(cls, file_upload):
         file_metadata = cls()
-        file_metadata.file = {file_upload.name: file_upload.read()}
+        # The API requires a mime type on the multipart file part. Use the
+        # browser-supplied content type, falling back to a guess from the
+        # file name.
+        content_type = getattr(file_upload, 'content_type', None) \
+            or mimetypes.guess_type(file_upload.name)[0] \
+            or 'application/octet-stream'
+        file_metadata.file = {file_upload.name: (file_upload.name, file_upload.read(), content_type)}
         return file_metadata
 
     @classmethod
@@ -2039,7 +2055,7 @@ class Attachment(object):
         elif comment_id:
             url = build_url(host, ['comments', comment_id, 'attachments'])
         else:
-            raise AssertionError, 'You must supply a profile_id or comment_id to attach to'
+            raise AssertionError('You must supply a profile_id or comment_id to attach to')
 
         attachment = {'FileHash': file_hash, 'FileName': file_name}
         headers = APIResource.make_request_headers(access_token)
