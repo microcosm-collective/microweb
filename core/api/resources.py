@@ -1,12 +1,13 @@
 import json
+import mimetypes
 import socket
 
 from django.conf import settings
 
 import requests
 
-from urlparse import urlparse
-from urlparse import urlunparse
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 from dateutil.parser import parse as parse_timestamp
 
@@ -15,13 +16,9 @@ from microweb.helpers import DateTimeEncoder
 
 import logging
 
-import pylibmc as memcache
+from django.core.cache import cache as mc
 
 logger = logging.getLogger('microcosm.middleware')
-mc = memcache.Client(['%s:%d' % (settings.MEMCACHE_HOST, settings.MEMCACHE_PORT)])
-
-NEGATIVE_CNAME_CACHE_VALUE = '__missing__'
-NEGATIVE_CNAME_CACHE_TTL = 86400
 
 RESOURCE_PLURAL = {
     'event': 'events',
@@ -44,6 +41,15 @@ COMMENTABLE_ITEM_TYPES = [
     'poll',
     'huddle'
 ]
+
+
+class TemplateSafeDict(dict):
+    """
+    Match Django template lookup semantics without raising for optional API keys.
+    """
+
+    def __missing__(self, key):
+        return None
 
 
 def build_url(host, path_fragments):
@@ -96,26 +102,17 @@ def get_subdomain_url(host):
         resolved_name = None
         try:
             resolved_name = mc.get(mc_key)
-        except memcache.Error as e:
+        except Exception as e:
             logger.error('Memcached error: %s' % str(e))
 
-        if resolved_name == NEGATIVE_CNAME_CACHE_VALUE:
-            raise APIException('Cached unresolved host %s' % host, 404)
-
         if resolved_name is None:
-            try:
-                resolved_name = Site.resolve_cname(host)
-            except APIException as e:
-                if e.status_code in [400, 404]:
-                    try:
-                        mc.set(mc_key, NEGATIVE_CNAME_CACHE_VALUE, time=NEGATIVE_CNAME_CACHE_TTL)
-                    except memcache.Error as cache_error:
-                        logger.error('Memcached error: %s' % str(cache_error))
-                raise
+            resolved_name = Site.resolve_cname(host)
 
             try:
-                mc.set(mc_key, resolved_name)
-            except memcache.Error as e:
+                # timeout=None means cache forever (matching the old pylibmc
+                # no-expiry behaviour); Django's default would be 300s.
+                mc.set(mc_key, resolved_name, timeout=None)
+            except Exception as e:
                 logger.error('Memcached error: %s' % str(e))
         return settings.API_SCHEME + resolved_name
 
@@ -140,7 +137,7 @@ def discard_querystring(url):
 
 def response_list_to_dict(responses):
     """
-    Takes a list of HTTP responses as returned by grequests.map and creates a dict
+    Takes a list of HTTP responses as returned by core.api.fetch.map and creates a dict
     with the request url as the key and the response as the value. If the request
     was redirected (as shown by a history tuple on the response), the
     prior request url will be used as the key.
@@ -198,13 +195,19 @@ class APIResource(object):
     to deal with custom validation and JSON processing.
     """
 
+    # Defaults so breadcrumbs.html doesn't raise VariableDoesNotExist on
+    # resources that never set these (e.g. a Conversation has no isConfidential).
+    user_id = None
+    breadcrumb = None
+    isConfidential = None
+
     @staticmethod
     def process_response(url, response):
 
         try:
             resource = response.json()
         except ValueError:
-            raise APIException('Response is not valid json:\n %s' % response.content, 500)
+            raise APIException('Response is not valid json:\n %s' % response.text, 500)
         if resource['error']:
             raise APIException(resource['error'], response.status_code, detail=resource['data'])
         if resource['data'] is None:
@@ -261,7 +264,7 @@ class APIResource(object):
         try:
             resource = response.json()
         except ValueError:
-            raise APIException('The API has returned invalid json: %s' % response.content, 500)
+            raise APIException('The API has returned invalid json: %s' % response.text, 500)
         if resource['error']:
             raise APIException(resource['error'], response.status_code)
 
@@ -274,8 +277,14 @@ class Site(object):
     api_path_fragment = 'site'
 
     def __init__(self, data):
+        self.auth0_client_id = None
+        self.auth0_domain = None
+        self.background_position = None
+        self.background_url = None
+        self.favicon_url = None
         self.site_id = data['siteId']
         self.site_url = data['siteURL']
+        self.url = data['siteURL']
         self.title = data['title']
         self.description = data['description']
         self.subdomain_key = data['subdomainKey']
@@ -331,7 +340,9 @@ class Site(object):
         response = requests.get(url)
         if response.status_code != 200:
             raise APIException('Error resolving CNAME %s' % host, response.status_code)
-        return response.content
+        # .text, not .content: the resolved name is concatenated into a URL
+        # and cached, so it must be str, not bytes.
+        return response.text
 
 
 class User(object):
@@ -402,14 +413,41 @@ class Profile(object):
         be a PUT or PATCH operation and not have all the expected keys.
         """
 
-        if data.get('id'): self.id = data['id']
-        if data.get('siteId'): self.site_id = data['siteId']
-        if data.get('userId'): self.user_id = data['userId']
+        self.avatar = None
+        self.comment_count = 0
+        self.created = None
+        self.email = None
+        self.is_member = False
+        self.item_count = 0
+        self.last_active = None
+        self.member = False
+        self.profile_comment = None
+        # Template defaults above must not turn into fields in update payloads.
+        # Keep track of the values represented by the input data separately.
+        self._serialized_fields = set()
+        if data.get('id'):
+            self.id = data['id']
+            self._serialized_fields.add('id')
+        if data.get('siteId'):
+            self.site_id = data['siteId']
+            self._serialized_fields.add('site_id')
+        if data.get('userId'):
+            self.user_id = data['userId']
+            self._serialized_fields.add('user_id')
         if data.get('email'): self.email = data['email']
-        if data.get('profileName'): self.profile_name = data['profileName']
-        if data.get('visible'): self.visible = data['visible']
-        if data.get('avatar'): self.avatar = data['avatar']
-        if data.get('member'): self.is_member = data['member']
+        if data.get('profileName'):
+            self.profile_name = data['profileName']
+            self._serialized_fields.add('profile_name')
+        if data.get('visible'):
+            self.visible = data['visible']
+            self._serialized_fields.add('visible')
+        if data.get('avatar'):
+            self.avatar = data['avatar']
+            self._serialized_fields.add('avatar')
+        if data.get('member'):
+            self.is_member = data['member']
+            self.member = data['member']
+            self._serialized_fields.add('is_member')
         if data.get('meta'): self.meta = Meta(data['meta'])
         if data.get('profileComment'):
                 self.profile_comment = Comment.from_summary(data['profileComment'])
@@ -420,6 +458,9 @@ class Profile(object):
             self.comment_count = data['commentCount']
             self.created = parse_timestamp(data['created'])
             self.last_active = parse_timestamp(data['lastActive'])
+            self._serialized_fields.update([
+                'style_id', 'item_count', 'comment_count', 'created', 'last_active',
+            ])
 
     @classmethod
     def from_summary(cls, data):
@@ -461,22 +502,28 @@ class Profile(object):
     @property
     def as_dict(self):
         repr = {}
-        if hasattr(self, 'id'): repr['id'] = self.id
-        if hasattr(self, 'site_id'): repr['siteId'] = self.site_id
-        if hasattr(self, 'user_id'): repr['userId'] = self.user_id
-        if hasattr(self, 'profile_name'): repr['profileName'] = self.profile_name
-        if hasattr(self, 'visible'): repr['visible'] =  self.visible
-        if hasattr(self, 'avatar'): repr['avatar'] = self.avatar
-        if hasattr(self, 'style_id'): repr['styleId'] = self.style_id
-        if hasattr(self, 'item_count'): repr['itemCount'] = self.item_count
-        if hasattr(self, 'comment_count'): repr['commentCount'] = self.comment_count
-        if hasattr(self, 'created'): repr['created'] = self.created
-        if hasattr(self, 'last_active'): repr['lastActive'] = self.last_active
+        field_map = {
+            'id': 'id',
+            'site_id': 'siteId',
+            'user_id': 'userId',
+            'profile_name': 'profileName',
+            'visible': 'visible',
+            'avatar': 'avatar',
+            'style_id': 'styleId',
+            'item_count': 'itemCount',
+            'comment_count': 'commentCount',
+            'created': 'created',
+            'last_active': 'lastActive',
+            'is_member': 'member',
+        }
+        for attribute, api_field in field_map.items():
+            if attribute in self._serialized_fields:
+                repr[api_field] = getattr(self, attribute)
+
         if hasattr(self, 'banned'): repr['banned'] = self.banned
         if hasattr(self, 'admin'): repr['admin'] = self.admin
-        if hasattr(self, 'is_member'): repr['member'] = self.is_member
 
-        if hasattr(self, 'profile_comment'): repr['markdown'] = self.profile_comment.markdown
+        if self.profile_comment: repr['markdown'] = self.profile_comment.markdown
 
         return repr
 
@@ -504,6 +551,13 @@ class ProfileList(object):
     """
 
     api_path_fragment = 'profiles'
+
+    # Defaults so breadcrumbs.html (skipself) and forms/subscribe.html don't
+    # raise VariableDoesNotExist; parent crumbs still come from meta.links.
+    breadcrumb = None
+    isConfidential = None
+    user_id = None
+    id = None
 
     def __init__(self, data):
         self.profiles = PaginatedList(data['profiles'], Profile)
@@ -534,9 +588,20 @@ class Microcosm(APIResource):
 
     api_path_fragment = 'microcosms'
 
+    profile_name = None  # default so breadcrumbs.html self-crumb lookup doesn't raise
+
     @classmethod
     def from_api_response(cls, data):
         microcosm = Microcosm()
+        microcosm.breadcrumb = None
+        microcosm.children = None
+        microcosm.description = None
+        microcosm.isConfidential = None
+        microcosm.item_types = []
+        microcosm.logoUrl = None
+        microcosm.most_recent_update = None
+        microcosm.total_comments = 0
+        microcosm.total_items = 0
         if data.get('id'): microcosm.id = data['id']
         if data.get('parentId'):
             microcosm.parent_id = data['parentId']
@@ -949,6 +1014,10 @@ class Item(object):
     @classmethod
     def from_summary(cls, data):
         item = cls()
+        item.breadcrumb = None
+        item.children = None
+        item.highlight = None
+        item.unread = False
         item.id = data['item']['id']
         item.item_type = data['itemType']
         if data['item'].get('microcosmId'):
@@ -982,6 +1051,12 @@ class PaginatedList(object):
     Generic list of items and pagination metadata (total, number of pages, etc.).
     """
 
+    # Defaults so breadcrumbs.html doesn't raise VariableDoesNotExist when a
+    # PaginatedList is rendered directly as content (e.g. the ignored page).
+    breadcrumb = None
+    isConfidential = None
+    user_id = None
+
     def __init__(self, item_list, list_item_cls):
         self.total = item_list['total']
         self.limit = item_list['limit']
@@ -1013,8 +1088,7 @@ class Breadcrumb(object):
     def __init__(self, crumbs):
         self.breadcrumb = {}
         for item in crumbs:
-            crumb = {'href': api_url_to_gui_url(item['href'])}
-            if 'title' in item: crumb['title'] = item['title']
+            crumb = {'href': api_url_to_gui_url(item['href']), 'title': item.get('title'), 'logoUrl': item.get('logoUrl')}
             self.breadcrumb[item['rel'] + str(item['level'])] = crumb
 
 class ChildLinks(object):
@@ -1026,9 +1100,7 @@ class ChildLinks(object):
         self.children = {}
         seq = 1000
         for item in children:
-            link = {'href': api_url_to_gui_url(item['href'])}
-            if 'title' in item: link['title'] = item['title']
-            if 'logoUrl' in item: link['logoUrl'] = item['logoUrl']
+            link = {'href': api_url_to_gui_url(item['href']), 'title': item.get('title'), 'logoUrl': item.get('logoUrl')}
             self.children[item['rel'] + str(seq)] = link
             seq = seq + 1
 
@@ -1039,12 +1111,39 @@ class Meta(object):
     """
 
     def __init__(self, data):
+        flag_defaults = {
+            'deleted': False,
+            'ignored': False,
+            'moderated': False,
+            'open': False,
+            'sendEmail': False,
+            'sticky': False,
+            'unread': False,
+            'watched': False,
+        }
+        stat_defaults = {
+            'onlineProfiles': 0,
+            'totalComments': 0,
+            'totalConversations': 0,
+            'totalEvents': 0,
+            'totalProfiles': 0,
+            'unreadHuddles': 0,
+        }
+        self.children = []
+        self.created = None
+        self.created_by = None
+        self.edited = None
+        self.edited_by = None
+        self.flags = TemplateSafeDict(flag_defaults)
+        self.links = TemplateSafeDict()
+        self.parents = []
+        self.stats = TemplateSafeDict(stat_defaults)
         if data.get('created'): self.created = (parse_timestamp(data['created']))
         if data.get('createdBy'): self.created_by = Profile(data['createdBy'])
         if data.get('edited'): self.edited = (parse_timestamp(data['edited']))
         if data.get('editedBy'): self.edited_by = Profile(data['editedBy'])
-        if data.get('flags'): self.flags = data['flags']
-        if data.get('permissions'): self.permissions = PermissionSet(data['permissions'])
+        if data.get('flags'): self.flags.update(data['flags'])
+        self.permissions = PermissionSet(data.get('permissions', {}))
         if data.get('inReplyTo'):
             self.parents = []
             self.parents.append(Comment.from_summary(data['inReplyTo']))
@@ -1053,14 +1152,12 @@ class Meta(object):
             for item in data['replies']:
                 self.children.append(Comment.from_summary(item))
         if data.get('links'):
-            self.links = {}
             for item in data['links']:
                 if 'title' in item:
                     self.links[item['rel']] = {'href': api_url_to_gui_url(item['href']), 'title': item['title']}
                 else:
                     self.links[item['rel']] = {'href': api_url_to_gui_url(item['href'])}
         if data.get('stats'):
-            self.stats = {}
             for stat in data['stats']:
                 if stat.get('metric'):
                     self.stats[stat['metric']] = stat['value']
@@ -1072,21 +1169,25 @@ class PermissionSet(object):
     """
 
     def __init__(self, data):
-        self.create    = data['create']
-        self.read      = data['read']
-        self.update    = data['update']
-        self.delete    = data['delete']
-        self.guest     = data['guest']
-        self.moderator = data['moderator']
-        self.owner     = data['owner']
-        self.admin     = data['siteOwner']
+        self.create    = data.get('create', False)
+        self.read      = data.get('read', False)
+        self.update    = data.get('update', False)
+        self.delete    = data.get('delete', False)
+        self.guest     = data.get('guest', False)
+        self.moderator = data.get('moderator', False)
+        self.owner     = data.get('owner', False)
+        self.admin     = data.get('siteOwner', False)
+        self.siteOwner = data.get('siteOwner', False)
+        self.banned    = data.get('banned', False)
+        self.close     = data.get('closeOwn', False)
+        self.open      = data.get('openOwn', False)
 
-        if data.get('banned'):
-            self.banned = data['banned']
-        if data.get('closeOwn'):
-            self.close = data['closeOwn']
-        if data.get('openOwn'):
-            self.open = data['openOwn']
+    @classmethod
+    def empty(cls):
+        return cls({
+            'create': False, 'read': False, 'update': False, 'delete': False,
+            'guest': False, 'moderator': False, 'owner': False, 'siteOwner': False,
+        })
 
 
 class Watcher(APIResource):
@@ -1189,6 +1290,12 @@ class UpdateList(object):
     """
 
     api_path_fragment = 'updates'
+
+    # Defaults so breadcrumbs.html (included with skipself) doesn't raise
+    # VariableDoesNotExist on these lookups; the parent crumbs come from meta.
+    breadcrumb = None
+    isConfidential = None
+    user_id = None
 
     def __init__(self, data):
         self.updates = PaginatedList(data['updates'], Update)
@@ -1398,6 +1505,13 @@ class Conversation(APIResource):
     @classmethod
     def from_summary(cls, data):
         conversation = cls()
+        conversation.breadcrumb = None
+        conversation.highlight = None
+        conversation.is_deleted = False
+        conversation.last_comment_created = None
+        conversation.last_comment_created_by = None
+        conversation.last_comment_id = None
+        conversation.unread = False
         conversation.id = data['id']
         conversation.microcosm_id = data['microcosmId']
         conversation.title = data['title']
@@ -1496,6 +1610,13 @@ class Huddle(APIResource):
     @classmethod
     def from_summary(cls, data):
         huddle = cls()
+        huddle.breadcrumb = None
+        huddle.isConfidential = None
+        huddle.last_comment_created = None
+        huddle.last_comment_created_by = None
+        huddle.last_comment_id = None
+        huddle.total_comments = 0
+        huddle.unread = False
         huddle.id = data['id']
         huddle.title = data['title']
         if data.get('lastCommentId'): huddle.last_comment_id = data['lastCommentId']
@@ -1582,6 +1703,12 @@ class HuddleList(object):
 
     api_path_fragment = 'huddles'
 
+    # Defaults so breadcrumbs.html (skipself) doesn't raise VariableDoesNotExist;
+    # parent crumbs still come from meta.links.
+    breadcrumb = None
+    isConfidential = None
+    user_id = None
+
     def __init__(self, data):
         self.huddles = PaginatedList(data['huddles'], Huddle)
         self.meta = Meta(data['meta'])
@@ -1624,6 +1751,25 @@ class Event(APIResource):
     @classmethod
     def from_summary(cls, data):
         event = cls()
+        event.attending = False
+        event.breadcrumb = None
+        event.duration = None
+        event.east = None
+        event.highlight = None
+        event.is_deleted = False
+        event.last_comment_created = None
+        event.last_comment_created_by = None
+        event.last_comment_id = None
+        event.lat = None
+        event.lon = None
+        event.north = None
+        event.rsvp_attend = 0
+        event.rsvp_spaces = 0
+        event.south = None
+        event.unread = False
+        event.west = None
+        event.when = None
+        event.where = None
         event.id = data['id']
         event.microcosm_id = data['microcosmId']
         event.title = data['title']
@@ -1672,8 +1818,6 @@ class Event(APIResource):
 
         if event.meta.flags.get('attending'):
             event.attending = event.meta.flags['attending']
-        else:
-            event.attending = False
 
         return event
 
@@ -1840,6 +1984,11 @@ class Comment(APIResource):
     @classmethod
     def from_api_response(cls, data):
         comment = cls()
+        comment.attachments = []
+        comment.description = None
+        comment.first_line = None
+        comment.in_reply_to = None
+        comment.title = None
         comment.id = data['id']
         comment.item_type = data['itemType']
         comment.item_id = data['itemId']
@@ -1967,7 +2116,13 @@ class FileMetadata(object):
     @classmethod
     def from_create_form(cls, file_upload):
         file_metadata = cls()
-        file_metadata.file = {file_upload.name: file_upload.read()}
+        # The API requires a mime type on the multipart file part. Use the
+        # browser-supplied content type, falling back to a guess from the
+        # file name.
+        content_type = getattr(file_upload, 'content_type', None) \
+            or mimetypes.guess_type(file_upload.name)[0] \
+            or 'application/octet-stream'
+        file_metadata.file = {file_upload.name: (file_upload.name, file_upload.read(), content_type)}
         return file_metadata
 
     @classmethod
@@ -2039,7 +2194,7 @@ class Attachment(object):
         elif comment_id:
             url = build_url(host, ['comments', comment_id, 'attachments'])
         else:
-            raise AssertionError, 'You must supply a profile_id or comment_id to attach to'
+            raise AssertionError('You must supply a profile_id or comment_id to attach to')
 
         attachment = {'FileHash': file_hash, 'FileName': file_name}
         headers = APIResource.make_request_headers(access_token)
@@ -2117,14 +2272,35 @@ class Search(object):
 
     api_path_fragment = "search"
 
+    # Defaults so breadcrumbs.html (included with skipparents/skipself) doesn't
+    # raise VariableDoesNotExist on these unconditional lookups.
+    isConfidential = None
+    user_id = None
+
     @classmethod
     def from_api_response(cls, data):
         search = cls()
-        search.query = data['query']
+        search.query = TemplateSafeDict({
+            'authorId': None,
+            'eventAfter': None,
+            'eventBefore': None,
+            'following': False,
+            'forumId': [],
+            'has': [],
+            'id': [],
+            'inTitle': False,
+            'q': '',
+            'searched': '',
+            'since': None,
+            'sort': '',
+            'type': [],
+            'until': None,
+        })
+        search.query.update(data['query'])
 
         search.type = []
-        if data['query'].get('type'):
-            for t in data['query']['type']:
+        if search.query.get('type'):
+            for t in search.query['type']:
                 search.type.append(t)
 
         if data.get('timeTakenInMs'):

@@ -4,35 +4,22 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 # Do not change these settings. Override them in local_settings.py if necessary.
 DEBUG = False
-TEMPLATE_DEBUG = False
 
-# ALLOWED_HOSTS is required in >Django 1.5. Since we allow customers to CNAME their domain
-# to a microcosm site, we cannot make use of this feature. Host is verified in the API.
+# ALLOWED_HOSTS would normally pin the hosts Django serves. Since we allow
+# customers to CNAME their domain to a microcosm site, we cannot make use of
+# this feature. Host is verified in the API.
 ALLOWED_HOSTS = [
     '*',
 ]
 
-# Test runner requires a database. This should never be used to store anything.
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
-    }
-}
+# There is no database. All content lives behind the Microcosm API.
+DATABASES = {}
 
 TIME_ZONE = 'Europe/London'
 LANGUAGE_CODE = 'en-gb'
 
-# For Django sites framework, not used for anything in microcosm.
-SITE_ID = 1
-
 # Internationalisation settings.
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 ## DO NOT ENABLE THIS, it will break editing and other places that embed identifiers
@@ -46,7 +33,7 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 
 # Absolute path to the directory static files should be collected to.
-# In production these are served by ~~nginx~~ or maybe whitenoise.
+# In production these are served by whitenoise.
 STATIC_ROOT = '/srv/www/django/microweb/static/'
 
 # URL prefix for static files.
@@ -57,32 +44,30 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-)
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.core.context_processors.request',
-    'django.core.context_processors.static',
-)
-TEMPLATE_DIRS = ()
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.template.context_processors.static',
+                'core.context_processors.site_context',
+            ],
+        },
+    },
+]
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
+    # Static file serving
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     # Note: if using messages, enable the sessions middleware too
     'django.middleware.common.CommonMiddleware',
 
     # CSRF protection on form submission
     'django.middleware.csrf.CsrfViewMiddleware',
-
-    # Convenience for request context like site, user account, etc.
-    'core.middleware.context.ContextMiddleware',
-
-    # Redirect to custom domain, if one exists for the site
-    'core.middleware.redirect.DomainRedirectMiddleware',
-
-    # # cache busting for static files
-    # 'core.middleware.modtimeurls.ModTimeUrlsMiddleware',
 
     # preconnect for 3rd party assets
     'core.middleware.preconnect.PreconnectMiddleware',
@@ -90,12 +75,14 @@ MIDDLEWARE_CLASSES = (
     # CORS for text/html pages
     'core.middleware.cors.CorsMiddleware',
 
-    # # time all requests and report to riemann
-    # 'core.middleware.timing.TimingMiddleware',
+    # Convenience for request context like site, user account, etc.
+    # Sits below Preconnect/Cors so that responses it short-circuits
+    # (e.g. 404 for unresolved hosts) still pass through them.
+    'core.middleware.context.ContextMiddleware',
 
-    # # push exceptions to riemann
-    # 'core.middleware.exception.ExceptionMiddleware',
-)
+    # Redirect to custom domain, if one exists for the site
+    'core.middleware.redirect.DomainRedirectMiddleware',
+]
 
 ROOT_URLCONF = 'microweb.urls'
 
@@ -103,7 +90,6 @@ ROOT_URLCONF = 'microweb.urls'
 WSGI_APPLICATION = 'microweb.wsgi.application'
 
 INSTALLED_APPS = (
-    'django.contrib.contenttypes',
     'django.contrib.humanize',
     'django.contrib.staticfiles',
     'core',
@@ -117,40 +103,26 @@ INSTALLED_APPS = (
     'search',
     'trending',
     'moderation',
+    'ignored',
+    'today',
     'redirect',
-    'gunicorn',
-    'core.templatetags.comments',
-    'core.templatetags.conversation',
-    'core.templatetags.event',
-    'core.templatetags.commentBox',
-    'core.templatetags.profile',
-    'core.templatetags.microcosm',
-    'core.templatetags.list_comment',
-    'core.templatetags.get_attachment',
-    'core.templatetags.huddle',
-    'core.templatetags.is_image',
 )
 
 # The values below in must be initialised in local_settings.py
 # Example values can be found in local_settings.py.example
 
 # Credentials generated when registering an application.
-from local_settings import CLIENT_ID
-from local_settings import CLIENT_SECRET
+from microweb.local_settings import CLIENT_ID
+from microweb.local_settings import CLIENT_SECRET
 
 # Microcosm API settings.
-from local_settings import API_SCHEME
-from local_settings import API_DOMAIN_NAME
-from local_settings import API_PATH
-from local_settings import API_VERSION
+from microweb.local_settings import API_SCHEME
+from microweb.local_settings import API_DOMAIN_NAME
+from microweb.local_settings import API_PATH
+from microweb.local_settings import API_VERSION
 
 if API_SCHEME == '' or API_DOMAIN_NAME == '' or API_PATH == '' or API_VERSION == '':
     raise Exception('Please define API settings in local_settings.py')
-
-# Riemann is used for exception reporting and metrics. Can be assigned empty
-# values in local_settings for local development.
-from microweb.local_settings import RIEMANN_ENABLED
-from microweb.local_settings import RIEMANN_HOST
 
 # Mostly used for site information cache. Compulsory.
 from microweb.local_settings import MEMCACHE_HOST
@@ -168,7 +140,20 @@ from microweb.local_settings import SECRET_KEY
 
 # Allows shadowing of DEBUG for development.
 from microweb.local_settings import DEBUG
-from microweb.local_settings import TEMPLATE_DEBUG
 
 # Allow override of STATIC_ROOT for production
 from microweb.local_settings import STATIC_ROOT
+
+# Site information cache (CNAME lookups, Site objects).
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+        'LOCATION': '%s:%s' % (MEMCACHE_HOST, MEMCACHE_PORT),
+        'OPTIONS': {
+            'use_pooling': True,
+            # Treat memcached outages as cache misses rather than errors.
+            'ignore_exc': True,
+            'no_delay': True,
+        },
+    },
+}

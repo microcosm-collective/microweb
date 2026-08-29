@@ -7,12 +7,9 @@ def profile(context, profile, **kwargs):
     if hasattr(profile,'item'):
         context['profile'] = profile
     else:
-        context['profile'] = {'item': profile}
+        context['profile'] = {'item': profile, 'item_type': 'profile'}
 
-    if 'no_icon' in kwargs:
-        context['no_icon'] = True
-
-    if 'send_message' in kwargs:
-        context['send_message'] = True
+    context['no_icon'] = bool(kwargs.get('no_icon', False))
+    context['send_message'] = bool(kwargs.get('send_message', False))
 
     return context

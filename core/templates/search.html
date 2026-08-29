@@ -15,7 +15,7 @@
 <div class="content-header padded">
 	<div class="row">
 		<div class="col-sm-12">
-			{% include 'breadcrumbs.html' %}
+			{% include 'breadcrumbs.html' with skipparents=True skipself=True %}
 		</div>
 	</div>
 {% if not content.results %}
@@ -83,7 +83,7 @@
 {% block sidebar %}
 
 <div class="metabar-module metabar-filters">
-	{% if "event" in content.type and content.type|length_is:"1" %}
+	{% if "event" in content.type and content.type|length == 1 %}
 	<h5>Popular Searches</h5>
 	<div class="metabar-module">
 		<div class="metabar-module-primary-buttons">
@@ -167,7 +167,7 @@
 			When ordering options, the most specific and specialised should be first and the most general should be last.
 			{% endcomment %}
 			
-			{% if "event" in content.type and content.type|length_is:"1" %}
+			{% if "event" in content.type and content.type|length == 1 %}
 
 				{% if content.query.eventAfter %}
 					<li class="list-group-item">
@@ -291,13 +291,13 @@
 		
 	</div>
 	{% endif %}
-	{% if content.query.q or "event" in content.type and content.type|length_is:"1" %}
+	{% if content.query.q or "event" in content.type and content.type|length == 1 %}
 	<div class="metabar-module-title">
 		<h3>Order By</h3>
 	</div>
 	<div class="metabar-module-body">
 
-		{% if "event" in content.type and content.type|length_is:"1" %}
+		{% if "event" in content.type and content.type|length == 1 %}
 			<div class="radio">
 				<label for="filter-oldest" title="ascending">
 					<input id="filter-oldest" type="radio" name="sort" value="oldest" {% if content.query.sort == "oldest" %}checked="checked"{% endif %}/>

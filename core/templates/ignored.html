@@ -14,10 +14,10 @@
 <div class="content-header padded">
 	<div class="row">
 		<div class="col-sm-12">
-			{% include 'breadcrumbs.html' %}
+			{% include 'breadcrumbs.html' with skipparents=True skipself=True %}
 		</div>
 	</div>
-{% if content.results.items|length == 0 %}
+{% if content.items|length == 0 %}
 	<h1>You are not ignoring anything.</h1>
 </div>
 <div class="content-body">
