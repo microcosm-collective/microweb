@@ -209,6 +209,12 @@ class APIResource(object):
     to deal with custom validation and JSON processing.
     """
 
+    # Defaults so breadcrumbs.html doesn't raise VariableDoesNotExist on
+    # resources that never set these (e.g. a Conversation has no isConfidential).
+    user_id = None
+    breadcrumb = None
+    isConfidential = None
+
     @staticmethod
     def process_response(url, response):
 
@@ -506,7 +512,7 @@ class Profile(object):
         if hasattr(self, 'admin'): repr['admin'] = self.admin
         if hasattr(self, 'is_member'): repr['member'] = self.is_member
 
-        if hasattr(self, 'profile_comment'): repr['markdown'] = self.profile_comment.markdown
+        if self.profile_comment: repr['markdown'] = self.profile_comment.markdown
 
         return repr
 
@@ -534,6 +540,13 @@ class ProfileList(object):
     """
 
     api_path_fragment = 'profiles'
+
+    # Defaults so breadcrumbs.html (skipself) and forms/subscribe.html don't
+    # raise VariableDoesNotExist; parent crumbs still come from meta.links.
+    breadcrumb = None
+    isConfidential = None
+    user_id = None
+    id = None
 
     def __init__(self, data):
         self.profiles = PaginatedList(data['profiles'], Profile)
@@ -563,6 +576,8 @@ class Microcosm(APIResource):
     """
 
     api_path_fragment = 'microcosms'
+
+    profile_name = None  # default so breadcrumbs.html self-crumb lookup doesn't raise
 
     @classmethod
     def from_api_response(cls, data):
@@ -1025,6 +1040,12 @@ class PaginatedList(object):
     Generic list of items and pagination metadata (total, number of pages, etc.).
     """
 
+    # Defaults so breadcrumbs.html doesn't raise VariableDoesNotExist when a
+    # PaginatedList is rendered directly as content (e.g. the ignored page).
+    breadcrumb = None
+    isConfidential = None
+    user_id = None
+
     def __init__(self, item_list, list_item_cls):
         self.total = item_list['total']
         self.limit = item_list['limit']
@@ -1258,6 +1279,12 @@ class UpdateList(object):
     """
 
     api_path_fragment = 'updates'
+
+    # Defaults so breadcrumbs.html (included with skipself) doesn't raise
+    # VariableDoesNotExist on these lookups; the parent crumbs come from meta.
+    breadcrumb = None
+    isConfidential = None
+    user_id = None
 
     def __init__(self, data):
         self.updates = PaginatedList(data['updates'], Update)
@@ -1664,6 +1691,12 @@ class HuddleList(object):
     """
 
     api_path_fragment = 'huddles'
+
+    # Defaults so breadcrumbs.html (skipself) doesn't raise VariableDoesNotExist;
+    # parent crumbs still come from meta.links.
+    breadcrumb = None
+    isConfidential = None
+    user_id = None
 
     def __init__(self, data):
         self.huddles = PaginatedList(data['huddles'], Huddle)
@@ -2227,6 +2260,11 @@ class Search(object):
     """
 
     api_path_fragment = "search"
+
+    # Defaults so breadcrumbs.html (included with skipparents/skipself) doesn't
+    # raise VariableDoesNotExist on these unconditional lookups.
+    isConfidential = None
+    user_id = None
 
     @classmethod
     def from_api_response(cls, data):
