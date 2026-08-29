@@ -436,16 +436,32 @@ class Profile(object):
         self.last_active = None
         self.member = False
         self.profile_comment = None
-        if data.get('id'): self.id = data['id']
-        if data.get('siteId'): self.site_id = data['siteId']
-        if data.get('userId'): self.user_id = data['userId']
+        # Template defaults above must not turn into fields in update payloads.
+        # Keep track of the values represented by the input data separately.
+        self._serialized_fields = set()
+        if data.get('id'):
+            self.id = data['id']
+            self._serialized_fields.add('id')
+        if data.get('siteId'):
+            self.site_id = data['siteId']
+            self._serialized_fields.add('site_id')
+        if data.get('userId'):
+            self.user_id = data['userId']
+            self._serialized_fields.add('user_id')
         if data.get('email'): self.email = data['email']
-        if data.get('profileName'): self.profile_name = data['profileName']
-        if data.get('visible'): self.visible = data['visible']
-        if data.get('avatar'): self.avatar = data['avatar']
+        if data.get('profileName'):
+            self.profile_name = data['profileName']
+            self._serialized_fields.add('profile_name')
+        if data.get('visible'):
+            self.visible = data['visible']
+            self._serialized_fields.add('visible')
+        if data.get('avatar'):
+            self.avatar = data['avatar']
+            self._serialized_fields.add('avatar')
         if data.get('member'):
             self.is_member = data['member']
             self.member = data['member']
+            self._serialized_fields.add('is_member')
         if data.get('meta'): self.meta = Meta(data['meta'])
         if data.get('profileComment'):
                 self.profile_comment = Comment.from_summary(data['profileComment'])
@@ -456,6 +472,9 @@ class Profile(object):
             self.comment_count = data['commentCount']
             self.created = parse_timestamp(data['created'])
             self.last_active = parse_timestamp(data['lastActive'])
+            self._serialized_fields.update([
+                'style_id', 'item_count', 'comment_count', 'created', 'last_active',
+            ])
 
     @classmethod
     def from_summary(cls, data):
@@ -497,20 +516,26 @@ class Profile(object):
     @property
     def as_dict(self):
         repr = {}
-        if hasattr(self, 'id'): repr['id'] = self.id
-        if hasattr(self, 'site_id'): repr['siteId'] = self.site_id
-        if hasattr(self, 'user_id'): repr['userId'] = self.user_id
-        if hasattr(self, 'profile_name'): repr['profileName'] = self.profile_name
-        if hasattr(self, 'visible'): repr['visible'] =  self.visible
-        if hasattr(self, 'avatar'): repr['avatar'] = self.avatar
-        if hasattr(self, 'style_id'): repr['styleId'] = self.style_id
-        if hasattr(self, 'item_count'): repr['itemCount'] = self.item_count
-        if hasattr(self, 'comment_count'): repr['commentCount'] = self.comment_count
-        if hasattr(self, 'created'): repr['created'] = self.created
-        if hasattr(self, 'last_active'): repr['lastActive'] = self.last_active
+        field_map = {
+            'id': 'id',
+            'site_id': 'siteId',
+            'user_id': 'userId',
+            'profile_name': 'profileName',
+            'visible': 'visible',
+            'avatar': 'avatar',
+            'style_id': 'styleId',
+            'item_count': 'itemCount',
+            'comment_count': 'commentCount',
+            'created': 'created',
+            'last_active': 'lastActive',
+            'is_member': 'member',
+        }
+        for attribute, api_field in field_map.items():
+            if attribute in self._serialized_fields:
+                repr[api_field] = getattr(self, attribute)
+
         if hasattr(self, 'banned'): repr['banned'] = self.banned
         if hasattr(self, 'admin'): repr['admin'] = self.admin
-        if hasattr(self, 'is_member'): repr['member'] = self.is_member
 
         if self.profile_comment: repr['markdown'] = self.profile_comment.markdown
 

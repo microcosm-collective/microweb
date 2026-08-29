@@ -249,6 +249,11 @@ class ResourceTests(unittest.TestCase):
         data = json.loads(open(os.path.join(TEST_ROOT, 'data', 'site.json')).read())['data']
         Site(data)
 
+    def testProfileEditPayloadDoesNotContainTemplateDefaults(self):
+        profile = Profile({'id': 1, 'profileName': 'new-name'})
+
+        assert profile.as_dict == {'id': 1, 'profileName': 'new-name'}
+
 
 class ErrorHandlingTests(unittest.TestCase):
 
