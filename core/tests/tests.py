@@ -17,8 +17,6 @@ from core.api.resources import Microcosm
 from core.api.resources import Profile
 from core.api.resources import Site
 from core.api.resources import Event
-from core.api.resources import NEGATIVE_CNAME_CACHE_TTL
-from core.api.resources import NEGATIVE_CNAME_CACHE_VALUE
 from core.api.resources import build_url
 from core.api.resources import is_ip_address
 from core.api.exceptions import APIException
@@ -99,19 +97,7 @@ class BuildURLTests(unittest.TestCase):
 
     @patch('core.api.resources.mc')
     @patch('core.api.resources.Site.resolve_cname')
-    def testCachedNegativeHostSkipsLookup(self, mock_resolve_cname, mock_mc):
-        mock_mc.get.return_value = NEGATIVE_CNAME_CACHE_VALUE
-
-        with self.assertRaises(APIException) as context:
-            build_url('missing.example.org', ['resource'])
-
-        assert context.exception.status_code == 404
-        assert 'Cached unresolved host missing.example.org' == context.exception.message
-        assert not mock_resolve_cname.called
-
-    @patch('core.api.resources.mc')
-    @patch('core.api.resources.Site.resolve_cname')
-    def testUnknownHostIsNegativeCached(self, mock_resolve_cname, mock_mc):
+    def testUnknownHostIsNotCached(self, mock_resolve_cname, mock_mc):
         mock_mc.get.return_value = None
         mock_resolve_cname.side_effect = APIException('Error resolving CNAME missing.example.org', 404)
 
@@ -119,7 +105,7 @@ class BuildURLTests(unittest.TestCase):
             build_url('missing.example.org', ['resource'])
 
         assert context.exception.status_code == 404
-        mock_mc.set.assert_called_once_with('missing.example.org_cname', NEGATIVE_CNAME_CACHE_VALUE, timeout=NEGATIVE_CNAME_CACHE_TTL)
+        assert not mock_mc.set.called
 
 
 class PaginationTests(unittest.TestCase):

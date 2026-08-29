@@ -20,9 +20,6 @@ from django.core.cache import cache as mc
 
 logger = logging.getLogger('microcosm.middleware')
 
-NEGATIVE_CNAME_CACHE_VALUE = '__missing__'
-NEGATIVE_CNAME_CACHE_TTL = 86400
-
 RESOURCE_PLURAL = {
     'event': 'events',
     'conversation': 'conversations',
@@ -108,19 +105,8 @@ def get_subdomain_url(host):
         except Exception as e:
             logger.error('Memcached error: %s' % str(e))
 
-        if resolved_name == NEGATIVE_CNAME_CACHE_VALUE:
-            raise APIException('Cached unresolved host %s' % host, 404)
-
         if resolved_name is None:
-            try:
-                resolved_name = Site.resolve_cname(host)
-            except APIException as e:
-                if e.status_code in [400, 404]:
-                    try:
-                        mc.set(mc_key, NEGATIVE_CNAME_CACHE_VALUE, timeout=NEGATIVE_CNAME_CACHE_TTL)
-                    except Exception as cache_error:
-                        logger.error('Memcached error: %s' % str(cache_error))
-                raise
+            resolved_name = Site.resolve_cname(host)
 
             try:
                 # timeout=None means cache forever (matching the old pylibmc
