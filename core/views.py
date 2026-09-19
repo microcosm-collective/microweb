@@ -143,7 +143,7 @@ def require_authentication(view_func):
 
     @wraps(view_func)
     def decorator(request, *args, **kwargs):
-        if hasattr(request, 'access_token'):
+        if getattr(request, 'access_token', None):
             return view_func(request, *args, **kwargs)
         else:
             return ErrorView.forbidden(request)
