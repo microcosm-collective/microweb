@@ -1,8 +1,8 @@
 import requests
-import grequests
+from core.api import fetch
 import logging
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponse
@@ -41,7 +41,7 @@ class UpdateView(object):
         # TODO: need a user friendly error page for unregistered users
         # TODO: remove 'site_section'
         if not request.access_token:
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
             view_data = {
                 'user': False,
                 'site_section': 'updates',
@@ -56,8 +56,8 @@ class UpdateView(object):
 
             url, params, headers = UpdateList.build_request(request.get_host(), offset=offset,
                                                             access_token=request.access_token)
-            request.view_requests.append(grequests.get(url, params=params, headers=headers))
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            request.view_requests.append(fetch.get(url, params=params, headers=headers))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
             updates_list = UpdateList(responses[url])
 
             view_data = {
@@ -118,8 +118,8 @@ class WatcherView(object):
 
             url, params, headers = WatcherList.build_request(request.get_host(), offset=offset,
                                                              access_token=request.access_token)
-            request.view_requests.append(grequests.get(url, params=params, headers=headers))
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            request.view_requests.append(fetch.get(url, params=params, headers=headers))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
             watchers_list = WatcherList(responses[url])
 
             view_data = {
@@ -194,12 +194,12 @@ class UpdatePreferenceView(object):
 
         if request.method == 'GET':
             url, params, headers = UpdatePreference.build_request(request.get_host(), request.access_token)
-            request.view_requests.append(grequests.get(url, params=params, headers=headers))
+            request.view_requests.append(fetch.get(url, params=params, headers=headers))
 
             url2, params2, headers2 = GlobalOptions.build_request(request.get_host(), request.access_token)
-            request.view_requests.append(grequests.get(url2, params=params2, headers=headers2))
+            request.view_requests.append(fetch.get(url2, params=params2, headers=headers2))
 
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
             preference_list = UpdatePreference.from_list(responses[url])
             global_options = GlobalOptions.from_api_response(responses[url2])
 

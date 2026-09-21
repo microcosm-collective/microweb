@@ -10,10 +10,10 @@ If you find any problems, just raise an issue on github and we'll respond ASAP.
 
 ## Project setup
 
-To run the django project, you'll first need to create a python virtualenv by running the following:
+To run the django project, you'll first need to create a python virtualenv by running the following (Python 3.12+ required, 3.14 recommended):
 
 ```
-virtualenv -p python2.7 envname
+python3 -m venv envname
 source envname/bin/activate
 pip install -r requirements.txt
 ```
@@ -63,23 +63,23 @@ def process_request(self, request):
     Checks for access_token cookie and appends it to the request object if present.
 
     All request objects have a view_requests attribute which is a list of requests
-    that will be executed by grequests to fetch data for the view.
+    that will be executed by core.api.fetch to fetch data for the view.
     """
 
     request.access_token = None
     request.whoami_url = ''
     request.view_requests = []
 
-    if request.COOKIES.has_key('access_token'):
+    if 'access_token' in request.COOKIES:
         request.access_token = request.COOKIES['access_token']
         request.whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
-        request.view_requests.append(grequests.get(request.whoami_url, params=params, headers=headers))
+        request.view_requests.append(fetch.get(request.whoami_url, params=params, headers=headers))
 
     request.site_url, params, headers = Site.build_request(request.get_host())
-    request.view_requests.append(grequests.get(request.site_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(request.site_url, params=params, headers=headers))
 ```
 
-As you can see, `request` has `view_requests` attribute which is a list of requests to be made to the API to render the view. The requests are executed concurrently using `grequests` in the views themselves (there's more work to be done here, like having a reusable connection pool, but it works well enough for now).
+As you can see, `request` has a `view_requests` attribute which is a list of requests to be made to the API to render the view. The requests are executed concurrently by `core/api/fetch.py`, which runs the batch on a shared thread pool (`concurrent.futures.ThreadPoolExecutor`) when the view calls `fetch.map(request.view_requests)`.
 
 So on each request we make a couple of calls to the API to check if the user has a valid `access_token` cookie, and retrieve some basic site data (title, description).
 
@@ -87,8 +87,10 @@ So on each request we make a couple of calls to the API to check if the user has
 
 If you've followed the instructions above on setting up a virtualenv, the next thing you'll need to do is fill in `local_settings.py` with your API key ([email us](mailto:founders@microcosm.cc) if you don't have one). Use [the template here](https://github.com/microcosm-collective/microweb/blob/main/microweb/local_settings.py.sample) as a guide.
 
-If you run with `DEBUG = True` (for development only!), static files should work correctly. In production, we use nginx to serve these.
+If you run with `DEBUG = True` (for development only!), static files should work correctly. In production, static files are served by [whitenoise](https://whitenoise.readthedocs.io/).
+
+You will also need a local [memcached](https://memcached.org/) running on the default port (11211) — it caches site and CNAME lookups.
 
 ## Deploying
 
-We use [fabric](http://www.fabfile.org/) as our deployment tool. To use this with your own instance, you'll need to modify `fabfile.py` to contain the hosts you wish to deploy to.
+Production deploys via [Dokku](https://dokku.com/) by pushing to a git remote. See `DEPLOYMENT.md` for the full server setup.

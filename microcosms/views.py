@@ -1,9 +1,9 @@
 import requests
-import grequests
+from core.api import fetch
 import json
 import logging
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponse
@@ -59,9 +59,9 @@ def root_microcosm(request):
     microcosm_id = 0
     microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
                                                              offset=offset, access_token=request.access_token)
-    request.view_requests.append(grequests.get(microcosm_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
 
@@ -89,9 +89,9 @@ def single_microcosm(request, microcosm_id):
 
     microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
                                                              offset=offset, access_token=request.access_token)
-    request.view_requests.append(grequests.get(microcosm_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
 
@@ -113,7 +113,7 @@ def single_microcosm(request, microcosm_id):
 #@cache_control(must_revalidate=True, max_age=0)
 def create_microcosm(request, parent_id=0):
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
 
@@ -147,7 +147,7 @@ def create_microcosm(request, parent_id=0):
 @cache_control(must_revalidate=True, max_age=0)
 def edit_microcosm(request, microcosm_id):
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     view_data = {
@@ -166,7 +166,7 @@ def edit_microcosm(request, microcosm_id):
         if request.POST.get('remove_logo'):
             payload['logoUrl'] = ''
             payload['removeLogo'] = True
-        elif request.FILES.has_key('logo'):
+        elif 'logo' in request.FILES:
             file_request = FileMetadata.from_create_form(
                 request.FILES['logo'],
             )
@@ -224,18 +224,18 @@ def list_members(request, microcosm_id):
 
     microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
         offset=offset, access_token=request.access_token)
-    request.view_requests.append(grequests.get(microcosm_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
     roles_url, params, headers = RoleList.build_request(request.META['HTTP_HOST'], id=microcosm_id,
         offset=offset, access_token=request.access_token)
-    request.view_requests.append(grequests.get(roles_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(roles_url, params=params, headers=headers))
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     roles = RoleList.from_api_response(responses[roles_url])
@@ -258,7 +258,7 @@ def list_members(request, microcosm_id):
 def members_api(request, microcosm_id):
 
     data = json.loads(request.body)
-    if data.has_key('deleteRole'):
+    if 'deleteRole' in data:
         # Delete
         roleId = data['deleteRole']
 
@@ -267,13 +267,13 @@ def members_api(request, microcosm_id):
         except APIException as exc:
             return respond_with_error(request, exc)
         if response.status_code != requests.codes.ok:
-            print 'role delete: ' + response.text
+            print('role delete: ' + response.text)
             return HttpResponseBadRequest()
 
         # Need to return a stub here to allow the callee (AJAX) to be happy
         return HttpResponse('{"context": "","status": 200,"data": {}, "error": null}')
 
-    elif data.has_key('role'):
+    elif 'role' in data:
         # Create or update
 
         role = Role.from_summary(data['role'])
@@ -286,7 +286,7 @@ def members_api(request, microcosm_id):
             except APIException as exc:
                 return respond_with_error(request, exc)
             if response.status_code != requests.codes.ok:
-                print 'role: ' + response.text
+                print('role: ' + response.text)
                 return HttpResponseBadRequest()
             role = Role.from_summary(response.json()['data'])
         else:
@@ -295,8 +295,8 @@ def members_api(request, microcosm_id):
             except APIException as exc:
                 return respond_with_error(request, exc)
             if response.status_code != requests.codes.found:
-                print json.dumps(role.as_dict())
-                print 'role: ' + response.text
+                print(json.dumps(role.as_dict()))
+                print('role: ' + response.text)
                 return HttpResponseBadRequest()
 
         # Delete all existing criteria and then add the new ones
@@ -305,10 +305,10 @@ def members_api(request, microcosm_id):
         except APIException as exc:
             return respond_with_error(request, exc)
         if response.status_code != requests.codes.ok:
-            print 'role criteria delete all: ' + response.text
+            print('role criteria delete all: ' + response.text)
             return HttpResponseBadRequest()
 
-        if data.has_key('criteria') and len(data['criteria']) > 0:
+        if 'criteria' in data and len(data['criteria']) > 0:
             # Loop
             for clob in data['criteria']:
                 crit = RoleCriteria.from_summary(clob)
@@ -319,7 +319,7 @@ def members_api(request, microcosm_id):
                     except APIException as exc:
                         return respond_with_error(request, exc)
                     if response.status_code != requests.codes.ok:
-                        print 'role criteria: ' + response.text
+                        print('role criteria: ' + response.text)
                         return HttpResponseBadRequest()
                     crit = RoleCriteria.from_summary(response.json()['data'])
                 else:
@@ -328,7 +328,7 @@ def members_api(request, microcosm_id):
                     except APIException as exc:
                         return respond_with_error(request, exc)
                     if response.status_code != requests.codes.ok:
-                        print 'role criteria: ' + response.text
+                        print('role criteria: ' + response.text)
                         return HttpResponseBadRequest()
                     crit = RoleCriteria.from_summary(response.json()['data'])
 
@@ -338,10 +338,10 @@ def members_api(request, microcosm_id):
         except APIException as exc:
             return respond_with_error(request, exc)
         if response.status_code != requests.codes.ok:
-            print 'role profile delete all: ' + response.text
+            print('role profile delete all: ' + response.text)
             return HttpResponseBadRequest()
 
-        if data.has_key('profiles') and len(data['profiles']) > 0:
+        if 'profiles' in data and len(data['profiles']) > 0:
             # Loop
             pids = []
             for pid in data['profiles']:
@@ -352,7 +352,7 @@ def members_api(request, microcosm_id):
             except APIException as exc:
                 return respond_with_error(request, exc)
             if response.status_code != requests.codes.ok:
-                print 'role profiles: ' + response.text
+                print('role profiles: ' + response.text)
                 return HttpResponseBadRequest()
 
         # Need to return a stub here to allow the callee (AJAX) to be happy
@@ -376,10 +376,10 @@ def create_members(request, microcosm_id):
 
         microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
             offset=offset, access_token=request.access_token)
-        request.view_requests.append(grequests.get(microcosm_url, params=params, headers=headers))
+        request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
 
         try:
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
         except APIException as exc:
             return respond_with_error(request, exc)
 
@@ -411,22 +411,22 @@ def edit_members(request, microcosm_id, group_id):
 
         microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
             offset=offset, access_token=request.access_token)
-        request.view_requests.append(grequests.get(microcosm_url, params=params, headers=headers))
+        request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
 
         role_url, params, headers = Role.build_request(request.get_host(), microcosm_id=microcosm_id,
             id=group_id, offset=offset, access_token=request.access_token)
-        request.view_requests.append(grequests.get(role_url, params=params, headers=headers))
+        request.view_requests.append(fetch.get(role_url, params=params, headers=headers))
 
         criteria_url, params, headers = RoleCriteriaList.build_request(request.get_host(),
             microcosm_id=microcosm_id, id=group_id, offset=offset, access_token=request.access_token)
-        request.view_requests.append(grequests.get(criteria_url, params=params, headers=headers))
+        request.view_requests.append(fetch.get(criteria_url, params=params, headers=headers))
 
         profiles_url, params, headers = RoleProfileList.build_request(request.get_host(),
             microcosm_id=microcosm_id, id=group_id, offset=offset, access_token=request.access_token)
-        request.view_requests.append(grequests.get(profiles_url, params=params, headers=headers))
+        request.view_requests.append(fetch.get(profiles_url, params=params, headers=headers))
 
         try:
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
         except APIException as exc:
             return respond_with_error(request, exc)
 

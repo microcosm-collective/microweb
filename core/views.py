@@ -1,4 +1,4 @@
-import grequests
+from core.api import fetch
 import datetime
 import logging
 import requests
@@ -7,10 +7,10 @@ import random
 
 from requests import RequestException
 
-from urllib import urlencode
-from urlparse import urlparse
-from urlparse import parse_qs
-from urlparse import urlunparse
+from urllib.parse import urlencode
+from urllib.parse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import urlunparse
 
 from functools import wraps
 
@@ -26,7 +26,6 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
 
-from django.template import RequestContext
 from django.template import loader
 
 from django.views.decorators.csrf import csrf_exempt
@@ -64,13 +63,13 @@ def build_error_view_data(request, include_user=False):
     site_url = None
 
     try:
-        if include_user and request.COOKIES.has_key('access_token'):
+        if include_user and 'access_token' in request.COOKIES:
             request.access_token = request.COOKIES['access_token']
             whoami_url, params, headers = WhoAmI.build_request(request.get_host(), request.access_token)
-            view_requests.append(grequests.get(whoami_url, params=params, headers=headers))
+            view_requests.append(fetch.get(whoami_url, params=params, headers=headers))
 
         site_url, params, headers = Site.build_request(request.get_host())
-        view_requests.append(grequests.get(site_url, params=params, headers=headers))
+        view_requests.append(fetch.get(site_url, params=params, headers=headers))
     except APIException as exc:
         if is_ip_address(request.get_host()):
             logger.info('Skipping error view context for IP host header %s' % request.get_host())
@@ -78,12 +77,12 @@ def build_error_view_data(request, include_user=False):
             logger.warning('Unable to build error view context for host %s: %s' % (request.get_host(), str(exc)))
         return view_data
 
-    responses = response_list_to_dict(grequests.map(view_requests))
+    responses = response_list_to_dict(fetch.map(view_requests))
 
-    if whoami_url and responses.has_key(whoami_url):
+    if whoami_url and whoami_url in responses:
         view_data['user'] = Profile(responses[whoami_url], summary=False)
 
-    if site_url and responses.has_key(site_url):
+    if site_url and site_url in responses:
         view_data['site'] = Site(responses[site_url])
 
     return view_data
@@ -192,7 +191,7 @@ def process_attachments(request, comment):
             )
 
     # Check if any files have been uploaded with the request.
-    if request.FILES.has_key('attachments'):
+    if 'attachments' in request.FILES:
         for f in request.FILES.getlist('attachments'):
             file_request = FileMetadata.from_create_form(f)
             # Maximum file size is 30 MB.
@@ -253,7 +252,7 @@ class LegalView(object):
     @require_safe
     def list(request):
         try:
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
         except APIException as exc:
             return respond_with_error(request, exc)
 
@@ -271,9 +270,9 @@ class LegalView(object):
             return HttpResponseNotFound()
 
         url, params, headers = Legal.build_request(request.get_host(), doc=doc_name)
-        request.view_requests.append(grequests.get(url, params=params, headers=headers))
+        request.view_requests.append(fetch.get(url, params=params, headers=headers))
         try:
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
         except APIException as exc:
             return respond_with_error(request, exc)
 
@@ -291,16 +290,14 @@ class LegalView(object):
 
 class ErrorView(object):
     @staticmethod
-    def not_found(request):
+    def not_found(request, exception=None):
         view_data = build_error_view_data(request, include_user=True)
-        context = RequestContext(request, view_data)
-        return HttpResponseNotFound(loader.get_template('404.html').render(context))
+        return HttpResponseNotFound(loader.get_template('404.html').render(view_data, request))
 
     @staticmethod
-    def forbidden(request):
+    def forbidden(request, exception=None):
         view_data = build_error_view_data(request, include_user=True)
-        context = RequestContext(request, view_data)
-        return HttpResponseForbidden(loader.get_template('403.html').render(context))
+        return HttpResponseForbidden(loader.get_template('403.html').render(view_data, request))
 
     @staticmethod
     def server_error(request, exception=None):
@@ -311,16 +308,14 @@ class ErrorView(object):
             if 'errorDetail' in exception.detail:
                 view_data['detail'] = exception.detail['errorDetail']
 
-        context = RequestContext(request, view_data)
-        return HttpResponseServerError(loader.get_template('500.html').render(context))
+        return HttpResponseServerError(loader.get_template('500.html').render(view_data, request))
 
     @staticmethod
     def requires_login(request):
         view_data = build_error_view_data(request)
         view_data['logout'] = True
 
-        context = RequestContext(request, view_data)
-        return HttpResponseForbidden(loader.get_template('403.html').render(context))
+        return HttpResponseForbidden(loader.get_template('403.html').render(view_data, request))
 
 class AuthenticationView(object):
 
@@ -375,7 +370,7 @@ class AuthenticationView(object):
         """
 
         response = redirect('/')
-        if request.COOKIES.has_key('access_token'):
+        if 'access_token' in request.COOKIES:
             response.set_cookie('access_token', '', expires="Thu, 01 Jan 1970 00:00:00 GMT")
             url = build_url(request.get_host(), ['auth', request.access_token])
             try:

@@ -1,8 +1,8 @@
-import grequests
+from core.api import fetch
 import string
 import logging
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.http import HttpResponseRedirect
 
@@ -46,17 +46,17 @@ def single(request, profile_id):
 
     # Fetch profile details.
     profile_url, params, headers = Profile.build_request(request.get_host(), profile_id, access_token=request.access_token)
-    request.view_requests.append(grequests.get(profile_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(profile_url, params=params, headers=headers))
 
     # Fetch items created by this profile.
     search_q = 'type:conversation type:event type:huddle type:comment authorId:%s' % profile_id
     search_params = {'limit': 10, 'q': search_q, 'sort': 'date'}
     search_url, params, headers = Search.build_request(request.get_host(), search_params,
         access_token=request.access_token)
-    request.view_requests.append(grequests.get(search_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(search_url, params=params, headers=headers))
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
 
@@ -90,9 +90,9 @@ def list(request):
     profiles_url, params, headers = ProfileList.build_request(request.get_host(), offset=offset, top=top,
         q=q, following=following, online=online, access_token=request.access_token)
 
-    request.view_requests.append(grequests.get(profiles_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(profiles_url, params=params, headers=headers))
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
 
@@ -143,7 +143,7 @@ def edit(request, profile_id):
     """
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     user = Profile(responses[request.whoami_url], summary=False)
@@ -156,7 +156,7 @@ def edit(request, profile_id):
         form = edit_form(request.POST)
         if form.is_valid():
             # Upload new avatar if present.
-            if request.FILES.has_key('avatar'):
+            if 'avatar' in request.FILES:
                 file_request = FileMetadata.from_create_form(request.FILES['avatar'])
                 file_metadata = file_request.create(request.get_host(), request.access_token, 100, 100)
                 try:
@@ -170,7 +170,7 @@ def edit(request, profile_id):
             profile_response = profile_request.update(request.get_host(), request.access_token)
 
             # Create, update or delete comment on profile (single comment acts as a bio).
-            if request.POST.has_key('markdown'):
+            if 'markdown' in request.POST:
                 profile_comment = {
                     'itemType': 'profile',
                     'itemId': profile_response.id,

@@ -1,8 +1,7 @@
-from django.conf.urls import url
-from django.conf.urls import patterns
+from django.urls import re_path
 
 from redirect import views
 
-urlpatterns = patterns('',
-    url(r'.+/$', views.redirect_or_404),
-)
+urlpatterns = [
+    re_path(r'.+/$', views.redirect_or_404),
+]

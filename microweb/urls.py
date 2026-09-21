@@ -1,29 +1,28 @@
-from django.conf.urls import patterns, include, url
+from django.urls import include, re_path
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from core.views import ErrorView
 
-from microweb import settings
+from django.conf import settings
 
 # In the following, redirect.urls *MUST* remain the very last URL as it handles
 # all urls as potentially being a 404
-urlpatterns = patterns(
-    '',
-    url(r'', include('microcosms.urls')),
-    url(r'', include('core.urls')),
-    url(r'', include('conversations.urls')),
-    url(r'', include('events.urls')),
-    url(r'', include('huddles.urls')),
-    url(r'', include('comments.urls')),
-    url(r'', include('profiles.urls')),
-    url(r'', include('updates.urls')),
-    url(r'', include('search.urls')),
-    url(r'', include('today.urls')),
-    url(r'', include('trending.urls')),
-    url(r'', include('moderation.urls')),
-    url(r'', include('ignored.urls')),
-    url(r'', include('redirect.urls')),
-)
+urlpatterns = [
+    re_path(r'', include('microcosms.urls')),
+    re_path(r'', include('core.urls')),
+    re_path(r'', include('conversations.urls')),
+    re_path(r'', include('events.urls')),
+    re_path(r'', include('huddles.urls')),
+    re_path(r'', include('comments.urls')),
+    re_path(r'', include('profiles.urls')),
+    re_path(r'', include('updates.urls')),
+    re_path(r'', include('search.urls')),
+    re_path(r'', include('today.urls')),
+    re_path(r'', include('trending.urls')),
+    re_path(r'', include('moderation.urls')),
+    re_path(r'', include('ignored.urls')),
+    re_path(r'', include('redirect.urls')),
+]
 
 # Serve static files with gunicorn if DEBUG is true.
 if settings.DEBUG:

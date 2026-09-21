@@ -1,8 +1,8 @@
 import requests
-import grequests
+from core.api import fetch
 import json
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.http import HttpResponseRedirect
 
@@ -37,8 +37,8 @@ def confirm(request):
                 request.POST.get('item_id'),
                 access_token=request.access_token
             )
-            request.view_requests.append(grequests.get(url, params=params, headers=headers))
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            request.view_requests.append(fetch.get(url, params=params, headers=headers))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
             content = Conversation.from_api_response(responses[url])
 
         elif request.POST.get('item_type') == 'event':
@@ -47,8 +47,8 @@ def confirm(request):
                 request.POST.get('item_id'),
                 access_token=request.access_token
             )
-            request.view_requests.append(grequests.get(url, params=params, headers=headers))
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            request.view_requests.append(fetch.get(url, params=params, headers=headers))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
             content = Event.from_api_response(responses[url])
 
         elif request.POST.get('item_type') == 'microcosm':
@@ -57,8 +57,8 @@ def confirm(request):
                 request.POST.get('item_id'),
                 access_token=request.access_token
             )
-            request.view_requests.append(grequests.get(url, params=params, headers=headers))
-            responses = response_list_to_dict(grequests.map(request.view_requests))
+            request.view_requests.append(fetch.get(url, params=params, headers=headers))
+            responses = response_list_to_dict(fetch.map(request.view_requests))
             content = Microcosm.from_api_response(responses[url])
 
         view_data = {

@@ -4,6 +4,7 @@ class APIException(Exception):
     """
 
     def __init__(self, error_message, status_code=None, detail=None):
+        self.message = error_message
         self.status_code = status_code
         self.detail = detail
         super(APIException, self).__init__(error_message)

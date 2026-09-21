@@ -1,4 +1,4 @@
-class CorsMiddleware():
+class CorsMiddleware:
     # TODO: Need to process OPTIONS request to return options:
     # add_header 'Access-Control-Allow-Origin' '*';
     # add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
@@ -7,6 +7,12 @@ class CorsMiddleware():
     # add_header 'Content-Type' 'text/plain charset=UTF-8';
     # add_header 'Content-Length' 0;
     # return 204;
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.process_response(request, self.get_response(request))
 
     def process_response(self, request, response):
         if response.get('Content-Type') == 'text/html; charset=utf-8':

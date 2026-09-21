@@ -1,9 +1,8 @@
-from django.conf.urls import url
-from django.conf.urls import patterns
+from django.urls import re_path
 
 from trending import views
 
 
-urlpatterns = patterns('',
-     url(r'^trending/$', views.list, name='list-trending'),
-)
+urlpatterns = [
+    re_path(r'^trending/$', views.list, name='list-trending'),
+]

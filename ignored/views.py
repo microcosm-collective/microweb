@@ -1,8 +1,8 @@
 import requests
-import grequests
+from core.api import fetch
 import logging
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
@@ -44,11 +44,11 @@ def ignored(request):
         access_token=request.access_token
     )
     request.view_requests.append(
-        grequests.get(url, params=params, headers=headers)
+        fetch.get(url, params=params, headers=headers)
     )
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     ignoredItems = Ignored.from_api_response(responses[url])
@@ -102,7 +102,7 @@ def ignore(request):
         )
 
     if response.status_code != requests.codes.ok:
-        print 'ignore: ' + response.text
+        print('ignore: ' + response.text)
         return HttpResponseBadRequest()
 
     return HttpResponseRedirect(reverse('list-ignored'))

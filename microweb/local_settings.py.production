@@ -6,14 +6,11 @@ API_SCHEME = os.getenv('API_SCHEME', 'https://')
 API_DOMAIN_NAME = os.getenv('API_DOMAIN_NAME', 'microcosm.app')
 API_PATH = 'api'
 API_VERSION = 'v1'
-RIEMANN_ENABLED = False
-RIEMANN_HOST = ''
 MEMCACHE_HOST = os.getenv('MEMCACHE_HOST', '127.0.0.1')
 MEMCACHE_PORT = os.getenv('MEMCACHE_PORT', 11211)
 PAGE_SIZE = 25
 SECRET_KEY = os.getenv('SECRET_KEY', '')
 DEBUG = False
-TEMPLATE_DEBUG = False
 
 # Absolute path to the directory static files should be collected to.
 # In production with Docker these are served by whitenoise.

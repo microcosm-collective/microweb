@@ -1,8 +1,8 @@
 import logging
-import grequests
+from core.api import fetch
 
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.http import HttpResponseRedirect
 
@@ -48,10 +48,10 @@ def single(request, conversation_id):
 
     conversation_url, params, headers = Conversation.build_request(request.get_host(), id=conversation_id,
         offset=offset, access_token=request.access_token)
-    request.view_requests.append(grequests.get(conversation_url, params=params, headers=headers))
+    request.view_requests.append(fetch.get(conversation_url, params=params, headers=headers))
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
 
@@ -88,7 +88,7 @@ def create(request, microcosm_id):
     """
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
     view_data = {
@@ -121,7 +121,7 @@ def create(request, microcosm_id):
                 try:
                     process_attachments(request, comment)
                 except ValidationError:
-                    responses = response_list_to_dict(grequests.map(request.view_requests))
+                    responses = response_list_to_dict(fetch.map(request.view_requests))
                     comment_form = CommentForm(
                         initial={
                             'itemId': comment.item_id,
@@ -159,7 +159,7 @@ def edit(request, conversation_id):
     """
 
     try:
-        responses = response_list_to_dict(grequests.map(request.view_requests))
+        responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
         return respond_with_error(request, exc)
 
