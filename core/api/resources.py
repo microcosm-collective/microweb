@@ -2042,13 +2042,6 @@ class Attachment(object):
         return url, params, headers
 
     @staticmethod
-    def retrieve(host, type, id, offset=None, access_token=None):
-        url, params, headers = Attachment.build_request(host, type, id, offset, access_token)
-        resource = APIResource.retrieve(url, params, headers)
-
-        return Attachment.from_api_response(resource)
-
-    @staticmethod
     def create(host, file_hash, profile_id=None, comment_id=None, access_token=None, file_name='untitled.unk'):
         if profile_id:
             url = build_url(host, ['profiles', profile_id, 'attachments'])

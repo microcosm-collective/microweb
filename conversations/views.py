@@ -15,6 +15,7 @@ from django.views.decorators.http import require_safe
 from core.views import build_pagination_links
 from core.views import build_newest_comment_link
 from core.views import respond_with_error
+from core.views import fetch_attachments
 from core.views import process_attachments
 
 from core.forms.forms import ConversationCreate
@@ -22,7 +23,6 @@ from core.forms.forms import ConversationEdit
 from core.forms.forms import CommentForm
 
 from core.api.resources import APIException
-from core.api.resources import Attachment
 from core.api.resources import Comment
 from core.api.resources import Conversation
 from core.api.resources import Profile
@@ -58,15 +58,6 @@ def single(request, conversation_id):
     conversation = Conversation.from_api_response(responses[conversation_url])
     comment_form = CommentForm(initial=dict(itemId=conversation_id, itemType='conversation'))
 
-    # get attachments
-    attachments = {}
-    for comment in conversation.comments.items:
-        c = comment.as_dict
-        if 'attachments' in c:
-            c_attachments = Attachment.retrieve(request.get_host(), "comments", c['id'],
-                access_token=request.access_token)
-            attachments[str(c['id'])] = c_attachments
-
     view_data = {
         'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
         'site': Site(responses[request.site_url]),
@@ -75,7 +66,7 @@ def single(request, conversation_id):
         'pagination': build_pagination_links(responses[conversation_url]['comments']['links'],
             conversation.comments),
         'item_type': 'conversation',
-        'attachments': attachments
+        'attachments': fetch_attachments(request, conversation.comments.items)
     }
     return render(request, single_template, view_data)
 

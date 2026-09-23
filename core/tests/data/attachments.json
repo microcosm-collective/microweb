@@ -1,0 +1,60 @@
+{
+    "context": "",
+    "status": 200,
+    "data": {
+        "attachments": {
+            "total": 1,
+            "limit": 25,
+            "offset": 0,
+            "maxOffset": 0,
+            "totalPages": 1,
+            "page": 1,
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "/api/v1/comments/2/attachments",
+                    "title": "1"
+                }
+            ],
+            "type": "attachments",
+            "items": [
+                {
+                    "profileId": 1,
+                    "fileHash": "2a5a2cc004aa06939fbc78630876617ce84b5359",
+                    "fileName": "diagram.png",
+                    "fileExt": "png",
+                    "created": "2021-12-29T20:32:05.820661Z",
+                    "meta": {
+                        "links": [
+                            {
+                                "rel": "related",
+                                "href": "/api/v1/files/2a5a2cc004aa06939fbc78630876617ce84b5359.png",
+                                "title": "File resource"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "meta": {
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "/api/v1/comments/2/attachments"
+                }
+            ],
+            "permissions": {
+                "create": false,
+                "read": true,
+                "update": false,
+                "delete": false,
+                "guest": true,
+                "banned": false,
+                "owner": false,
+                "moderator": false,
+                "siteOwner": false
+            }
+        }
+    },
+    "error": null
+}

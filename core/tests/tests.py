@@ -7,11 +7,14 @@ import unittest
 from django.conf import settings
 from django.test.client import RequestFactory
 
+from unittest.mock import Mock
 from unittest.mock import patch
 
 from core.views import build_pagination_links
 from core.views import build_newest_comment_link
+from core.views import fetch_attachments
 
+from core.api.resources import Comment
 from core.api.resources import Conversation
 from core.api.resources import Microcosm
 from core.api.resources import Profile
@@ -180,6 +183,65 @@ class PaginationTests(unittest.TestCase):
 
         location = build_newest_comment_link(response)
         assert location == '/conversations/161991/#comment7050281'
+
+
+def load_fixture(name):
+    return json.loads(open(os.path.join(TEST_ROOT, 'data', name)).read())
+
+
+def fake_api_response(url, body, status_code=200):
+    response = Mock()
+    response.url = url
+    response.history = []
+    response.json.return_value = body
+    response.status_code = status_code
+    return response
+
+
+def attachments_body(file_name):
+    body = load_fixture('attachments.json')
+    body['data']['attachments']['items'][0]['fileName'] = file_name
+    return body
+
+
+class FetchAttachmentsTests(unittest.TestCase):
+
+    def setUp(self):
+        request = RequestFactory().get('/conversations/1/', HTTP_HOST='dev1.microcosm.app')
+        request.access_token = None
+        self.request = request
+
+        items = load_fixture('conversation_with_paginated_comments.json')['data']['comments']['items'][:3]
+        items[0]['attachments'] = 1
+        items[2]['attachments'] = 2
+        self.comments = [Comment.from_summary(item) for item in items]
+
+    def file_names(self, attachments):
+        return {comment_id: [a.file_name for a in page.items] for comment_id, page in attachments.items()}
+
+    @patch('requests.get')
+    def testFetchesOnlyCommentsWithAttachments(self, mock_get):
+        bodies = {
+            'https://dev1.microcosm.app/api/v1/comments/1/attachments': attachments_body('diagram.png'),
+            'https://dev1.microcosm.app/api/v1/comments/3/attachments': attachments_body('photo.jpg'),
+        }
+        mock_get.side_effect = lambda url, **kwargs: fake_api_response(url, bodies[url])
+
+        attachments = fetch_attachments(self.request, self.comments)
+
+        assert self.file_names(attachments) == {'1': ['diagram.png'], '3': ['photo.jpg']}
+
+    @patch('requests.get')
+    def testFailedFetchOmitsOnlyThatComment(self, mock_get):
+        def side_effect(url, **kwargs):
+            if url.endswith('/comments/1/attachments'):
+                return fake_api_response(url, {'error': 'boom', 'data': None}, status_code=500)
+            return fake_api_response(url, attachments_body('photo.jpg'))
+        mock_get.side_effect = side_effect
+
+        attachments = fetch_attachments(self.request, self.comments)
+
+        assert self.file_names(attachments) == {'3': ['photo.jpg']}
 
 
 class ResourceTests(unittest.TestCase):
