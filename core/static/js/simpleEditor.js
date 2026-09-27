@@ -173,7 +173,7 @@
 
     simpleEditor.prototype.renderAttachmentGallery = function(files){
       var ul,li,img,a,span,
-          recognised_file_exts = ['jpg','jpeg','gif','png','bmp'],
+          recognised_file_exts = ['jpg','jpeg','gif','png','bmp','webp','avif'],
           gallery = this.$el.find('.reply-box-attachments-gallery');
 
 
