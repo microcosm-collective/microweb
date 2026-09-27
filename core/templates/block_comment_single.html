@@ -14,7 +14,7 @@
 				{% endif %}
 			</div>
 			<div class="comment-item-author" itemprop="author" itemscope itemtype="http://schema.org/Person">
-			{% if comment.meta.created_by %}
+			{% if comment.meta.created_by.id %}
 				<a href="{% url 'single-profile' comment.meta.created_by.id %}" itemprop="url"><img src="{% if 'gravatar' in comment.meta.created_by.avatar %}{{comment.meta.created_by.avatar}}{% elif 'files' in comment.meta.created_by.avatar %}https://{{site.subdomain_key}}.microcosm.app{{comment.meta.created_by.avatar}}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ comment.meta.created_by.profile_name | safe }}" align="left" class="gravatar" itemprop="image" /> <strong class="comment-item-author-name" itemprop="name">{{ comment.meta.created_by.profile_name | safe | truncatechars:25 }}</strong></a>
 				{% endif %}
 

@@ -20,7 +20,7 @@
 			<h1><a href="{{ content.meta.links.up.href }}">{{ content.meta.links.up.title | safe }}</a></h1>
 		</div>
 		<div class="alert alert-warning">
-			You are reading a single comment by <a href="{% url 'single-profile' content.meta.created_by.id %}">@{{ content.meta.created_by.profile_name | safe }}</a> and its replies.
+			You are reading a single comment{% if content.meta.created_by.id %} by <a href="{% url 'single-profile' content.meta.created_by.id %}">@{{ content.meta.created_by.profile_name | safe }}</a>{% endif %} and its replies.
 			<a href="{{ content.meta.links.commentPage.href }}#{{ content.id }}">Click here to read the full conversation.</a>
 		</div>
 	</div> <!-- item -->
@@ -58,9 +58,11 @@
 			<p>
 				{{ content.description | safe }}
 			</p>
-			<p class="metabar-module-author">
-				<a href="{% url 'single-profile' content.meta.created_by.id %}"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in  content.meta.created_by.avatar  %}https://{{site.subdomain_key}}.microcosm.app{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.meta.created_by.profile_name | safe }}" /> @{{ content.meta.created_by.profile_name | safe | truncatechars:25 }}</a> started <time datetime="{{ content.meta.created|date:"c" }}"></time>
-			</p>
+			{% if content.meta.created_by.id %}
+				<p class="metabar-module-author">
+					<a href="{% url 'single-profile' content.meta.created_by.id %}"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in  content.meta.created_by.avatar  %}https://{{site.subdomain_key}}.microcosm.app{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.meta.created_by.profile_name | safe }}" /> @{{ content.meta.created_by.profile_name | safe | truncatechars:25 }}</a> started <time datetime="{{ content.meta.created|date:"c" }}"></time>
+				</p>
+			{% endif %}
 		</div>
 	</div> <!-- / about -->
 
