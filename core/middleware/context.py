@@ -33,6 +33,11 @@ class ContextMiddleware:
         that will be executed by core.api.fetch to fetch data for the view.
         """
 
+        # The readiness endpoint must only verify that Django is serving requests;
+        # it must not depend on the external Microcosm API being available.
+        if request.path == '/health/ready':
+            return None
+
         request.access_token = None
         request.whoami_url = ''
         request.view_requests = []
