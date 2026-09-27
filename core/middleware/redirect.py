@@ -31,6 +31,10 @@ class DomainRedirectMiddleware:
 
     def process_request(self, request):
 
+        # Keep the readiness endpoint independent of site lookup and redirects.
+        if request.path == '/health/ready':
+            return None
+
         host = request.get_host()
 
         # Only look at requests to example.microcosm.app

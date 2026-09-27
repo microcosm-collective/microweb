@@ -7,9 +7,13 @@ from core.views import FaviconView
 from core.views import RobotsView
 from core.views import LegalView
 from core.views import echo_headers
+from core.views import health_ready
 
 
 urlpatterns = [
+    # Dokku readiness check. Keep this before routes that require site context.
+    re_path(r'^health/ready$', health_ready, name='health-ready'),
+
     # Static
     re_path(r'^robots\.txt$', RobotsView.as_view()),
     re_path(r'^favicon\.ico$', FaviconView.as_view()),

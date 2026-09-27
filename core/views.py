@@ -52,6 +52,13 @@ from core.api.resources import build_url
 logger = logging.getLogger('core.views')
 
 
+@require_safe
+def health_ready(request):
+    """Return a successful response when the Django web process is ready."""
+
+    return HttpResponse('ok\n')
+
+
 def build_error_view_data(request, include_user=False):
     """
     Best-effort context for error pages. Unknown hosts should not trigger a second failure.
