@@ -144,6 +144,9 @@ dokku domains:add microweb *.microcosm.app
 dokku domains:add microweb lfgss.com
 dokku domains:add microweb www.lfgss.com
 
+dokku network:create microweb-network
+dokku network:set microweb attach-post-create microweb-network
+
 dokku config:set --no-restart microweb DJANGO_SETTINGS_MODULE=microweb.settings
 dokku config:set --no-restart microweb PYTHONPATH=.
 dokku config:set --no-restart microweb MEMCACHE_HOST=dokku-memcached-microweb-memcached
