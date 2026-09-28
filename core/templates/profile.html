@@ -27,9 +27,13 @@
 									 src="{% if 'gravatar' in content.avatar %}{{content.avatar}}{% elif 'files' in content.avatar %}https://{{site.subdomain_key}}.microcosm.app{{content.avatar}}{% else %}/static/img/avatar.gif{% endif %}" class="gravatar" alt="Avatar for {{ content.profile_name | safe }}" />
 							<div class="profile-header-text">
 								<h1><a href="{{ content.meta.links.self.href }}">{{ content.profile_name | safe }}</a></h1>
+								{% if content.created.year > 1 %}
 								Member since {{ content.created|date:"M Y" }}
-								&bull;
+								{% endif %}
+								{% if content.created.year > 1 and content.last_active.year > 1 %}&bull;{% endif %}
+								{% if content.last_active.year > 1 %}
 								Last active {{content.last_active|date:"M Y"}}
+								{% endif %}
 							</div>
 							 <ul class="list-stats profile-header-stats">
 									<li>
