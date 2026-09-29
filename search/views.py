@@ -1,6 +1,7 @@
 from core.api import fetch
 import logging
 
+from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 
 from django.views.decorators.cache import cache_control
@@ -20,8 +21,19 @@ logger = logging.getLogger('search.views')
 single_template = 'search.html'
 
 
+def _has_invalid_offset(request):
+    """Return whether any supplied search offset is not a non-negative integer."""
+    for offset in request.GET.getlist('offset'):
+        if not offset or not offset.isascii() or not offset.isdigit():
+            return True
+    return False
+
+
 @require_safe
 def single(request):
+
+    if _has_invalid_offset(request):
+        return HttpResponseBadRequest('Invalid offset.')
 
     searchParams = dict(request.GET.lists())
     if searchParams.get('defaults'):
@@ -48,4 +60,3 @@ def single(request):
         view_data['pagination'] = build_pagination_links(responses[url]['results']['links'], search.results)
 
     return render(request, single_template, view_data)
-
