@@ -328,6 +328,7 @@ class AuthenticationView(object):
 
     @staticmethod
     @csrf_exempt
+    @require_http_methods(["POST"])
     def login(request):
         """
         Log a user in using Persona.
