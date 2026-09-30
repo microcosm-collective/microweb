@@ -145,7 +145,7 @@ dokku domains:add microweb lfgss.com
 dokku domains:add microweb www.lfgss.com
 
 dokku network:create microweb-network
-dokku network:set microweb attach-post-create microweb-network
+dokku network:set microweb initial-network microweb-network
 
 dokku config:set --no-restart microweb DJANGO_SETTINGS_MODULE=microweb.settings
 dokku config:set --no-restart microweb PYTHONPATH=.
