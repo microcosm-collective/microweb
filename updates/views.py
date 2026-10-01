@@ -146,9 +146,9 @@ class WatcherView(object):
             return HttpResponse()
         elif request.POST.get('patch'):
             postdata = {
-                'itemType': request.REQUEST.get('itemType'),
-                'itemId': int(request.REQUEST.get('itemId')),
-                'sendEmail': "true" == request.REQUEST.get('emailMe')
+                'itemType': request.POST.get('itemType'),
+                'itemId': int(request.POST.get('itemId')),
+                'sendEmail': "true" == request.POST.get('emailMe')
             }
             response = Watcher.update(request.get_host(), postdata, request.access_token)
             if response.status_code == requests.codes.ok:
