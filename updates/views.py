@@ -3,7 +3,7 @@ from core.api import fetch
 import logging
 
 from django.urls import reverse
-
+from django.conf import settings
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -51,6 +51,7 @@ class UpdateView(object):
             # pagination offset
             try:
                 offset = int(request.GET.get('offset', 0))
+                offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
             except ValueError:
                 offset = 0
 
@@ -113,6 +114,7 @@ class WatcherView(object):
             # pagination offset
             try:
                 offset = int(request.GET.get('offset', 0))
+                offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
             except ValueError:
                 offset = 0
 

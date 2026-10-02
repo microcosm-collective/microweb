@@ -19,6 +19,12 @@ from core.views import respond_with_error
 logger = logging.getLogger('today.views')
 single_template = 'today.html'
 
+def _parse_offset(request):
+    """Return the requested offset, rounded down to a multiple of 25 (0 if missing or invalid)."""
+    raw = request.GET.get('offset', '')
+    if not (raw.isascii() and raw.isdigit()):
+        return 0
+    return max(0, int(raw) // settings.PAGE_SIZE * settings.PAGE_SIZE)
 
 @require_safe
 def single(request):
@@ -26,6 +32,7 @@ def single(request):
     searchParams = request.GET.dict()
     searchParams['type'] = ['conversation','event','profile','huddle']
     searchParams['since'] = -1
+    searchParams['offset'] = _parse_offset(request)
 
     url, params, headers = Search.build_request(request.get_host(), params=searchParams,
         access_token=request.access_token)

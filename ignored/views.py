@@ -3,7 +3,7 @@ from core.api import fetch
 import logging
 
 from django.urls import reverse
-
+from django.conf import settings
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
 
@@ -35,6 +35,7 @@ def ignored(request):
 
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
 

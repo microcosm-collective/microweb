@@ -3,9 +3,8 @@ import string
 import logging
 
 from django.urls import reverse
-
+from django.conf import settings
 from django.http import HttpResponseRedirect
-
 from django.shortcuts import render
 
 from django.views.decorators.cache import cache_control
@@ -80,6 +79,7 @@ def list(request):
     # Record offset for paging of profiles.
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
     top = bool(request.GET.get('top', False))

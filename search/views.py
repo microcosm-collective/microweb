@@ -21,21 +21,17 @@ logger = logging.getLogger('search.views')
 single_template = 'search.html'
 
 
-def _has_invalid_offset(request):
-    """Return whether any supplied search offset is not a non-negative integer."""
-    for offset in request.GET.getlist('offset'):
-        if not offset or not offset.isascii() or not offset.isdigit():
-            return True
-    return False
-
+def _parse_offset(request):
+    """Return the requested offset, rounded down to a multiple of 25 (0 if missing or invalid)."""
+    raw = request.GET.get('offset', '')
+    if not (raw.isascii() and raw.isdigit()):
+        return 0
+    return max(0, int(raw) // settings.PAGE_SIZE * settings.PAGE_SIZE)
 
 @require_safe
 def single(request):
-
-    if _has_invalid_offset(request):
-        return HttpResponseBadRequest('Invalid offset.')
-
     searchParams = dict(request.GET.lists())
+    searchParams['offset'] = _parse_offset(request)
     if searchParams.get('defaults'):
         searchParams['inTitle'] = 'true'
         searchParams['sort'] = 'date'

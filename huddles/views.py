@@ -2,6 +2,7 @@ from core.api import fetch
 import json
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
@@ -47,6 +48,7 @@ def single(request, huddle_id):
     # Comment offset.
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
 
@@ -92,6 +94,7 @@ def list(request):
     # Offset for paging of huddles
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
     unread = bool(request.GET.get('unread', False))

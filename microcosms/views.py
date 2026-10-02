@@ -4,7 +4,7 @@ import json
 import logging
 
 from django.urls import reverse
-
+from django.conf import settings
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -53,6 +53,7 @@ def root_microcosm(request):
     # Pagination offset of items within the microcosm.
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
 
@@ -84,6 +85,7 @@ def single_microcosm(request, microcosm_id):
     # Pagination offset of items within the microcosm.
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
 
@@ -219,6 +221,7 @@ def delete_microcosm(request, microcosm_id):
 def list_members(request, microcosm_id):
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
 
@@ -371,6 +374,7 @@ def create_members(request, microcosm_id):
     elif request.method == 'GET':
         try:
             offset = int(request.GET.get('offset', 0))
+            offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
         except ValueError:
             offset = 0
 
@@ -406,6 +410,7 @@ def edit_members(request, microcosm_id, group_id):
     elif request.method == 'GET':
         try:
             offset = int(request.GET.get('offset', 0))
+            offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
         except ValueError:
             offset = 0
 
