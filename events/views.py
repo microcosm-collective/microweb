@@ -21,13 +21,13 @@ from django.views.decorators.http import require_safe
 
 from core.views import respond_with_error
 from core.views import require_authentication
+from core.views import fetch_attachments
 from core.views import process_attachments
 from core.views import build_pagination_links
 from core.views import build_newest_comment_link
 
 from core.api.exceptions import APIException
 from core.api.resources import build_url
-from core.api.resources import Attachment
 from core.api.resources import AttendeeList
 from core.api.resources import Comment
 from core.api.resources import Event
@@ -124,16 +124,6 @@ def single(request, event_id):
     if len(attendees_yes) and event.rsvp_percentage < 10:
         rsvp_percentage = 10
 
-    # Fetch attachments for all comments on this page.
-    # TODO: the code that does this should be in one place.
-    attachments = {}
-    for comment in event.comments.items:
-        c = comment.as_dict
-        if 'attachments' in c:
-            c_attachments = Attachment.retrieve(request.get_host(), "comments", c['id'],
-                access_token=request.access_token)
-            attachments[str(c['id'])] = c_attachments
-
     view_data = {
         'user': user,
         'site': Site(responses[request.site_url]),
@@ -154,7 +144,7 @@ def single(request, event_id):
         'rsvp_percentage': rsvp_percentage,
 
         'is_expired': is_expired,
-        'attachments': attachments
+        'attachments': fetch_attachments(request, event.comments.items)
     }
 
     return render(request, single_template, view_data)
