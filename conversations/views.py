@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 
 from django.shortcuts import render
 
+from django.conf import settings
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.http import require_safe
@@ -43,6 +44,7 @@ def single(request, conversation_id):
     # Offset of comments.
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
 

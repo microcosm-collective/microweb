@@ -5,6 +5,7 @@ import json
 import logging
 
 from django.urls import reverse
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
 
@@ -60,6 +61,7 @@ def single(request, event_id):
     # Comment offset.
     try:
         offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
     except ValueError:
         offset = 0
 
