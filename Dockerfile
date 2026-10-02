@@ -28,4 +28,4 @@ EXPOSE ${PORT}
 # gthread workers: 4 processes x 8 threads = 32 concurrent requests per
 # container. Each worker process owns one shared ThreadPoolExecutor
 # (core/api/fetch.py) for concurrent API calls.
-CMD ["sh", "-c", "exec /usr/local/bin/gunicorn microweb.wsgi -b 0.0.0.0:${PORT} --forwarded-allow-ips '*' --worker-class gthread --workers 4 --threads 8 --max-requests 1000"]
+CMD ["sh", "-c", "exec /usr/local/bin/gunicorn microweb.wsgi -b 0.0.0.0:${PORT} --forwarded-allow-ips '*' --worker-class gthread --workers 4 --threads 8 --max-requests 10000 --max-requests-jitter 1000"]
