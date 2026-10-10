@@ -15,7 +15,6 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.http import require_safe
 
 from core.api.resources import APIException
-from core.api.resources import Attachment
 from core.api.resources import Comment
 from core.api.resources import Huddle
 from core.api.resources import HuddleList
@@ -25,6 +24,7 @@ from core.api.resources import Site
 
 from core.views import build_newest_comment_link
 from core.views import build_pagination_links
+from core.views import fetch_attachments
 from core.views import process_attachments
 from core.views import respond_with_error
 from core.views import require_authentication
@@ -63,15 +63,6 @@ def single(request, huddle_id):
     huddle = Huddle.from_api_response(responses[huddle_url])
     comment_form = CommentForm(initial=dict(itemId=huddle_id, itemType='huddle'))
 
-    # Fetch attachments.
-    attachments = {}
-    for comment in huddle.comments.items:
-        c = comment.as_dict
-        if 'attachments' in c:
-            c_attachments = Attachment.retrieve(request.get_host(), "comments", c['id'],
-                access_token=request.access_token)
-            attachments[str(c['id'])] = c_attachments
-
     # Fetch huddle participants.
     participants_json = [p.as_dict for p in huddle.participants]
 
@@ -82,7 +73,7 @@ def single(request, huddle_id):
         'comment_form': comment_form,
         'pagination': build_pagination_links(responses[huddle_url]['comments']['links'], huddle.comments),
         'item_type': 'huddle',
-        'attachments': attachments,
+        'attachments': fetch_attachments(request, huddle.comments.items),
         'participants_json': json.dumps(participants_json)
     }
 

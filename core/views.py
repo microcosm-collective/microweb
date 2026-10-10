@@ -37,6 +37,7 @@ from django.views.generic.base import TemplateView
 
 from core.api.exceptions import APIException
 from core.api.resources import api_url_to_gui_url
+from core.api.resources import APIResource
 from core.api.resources import Attachment
 from core.api.resources import Comment
 from core.api.resources import FileMetadata
@@ -209,6 +210,34 @@ def process_attachments(request, comment):
                 file_metadata = file_request.create(request.get_host(), request.access_token)
                 Attachment.create(request.get_host(), file_metadata.file_hash,
                                   comment_id=comment.id, access_token=request.access_token, file_name=f.name)
+
+
+def fetch_attachments(request, comments):
+    """
+    Fetch the attachment lists for any of the provided comments that have
+    attachments, concurrently. Returns a dict of comment ID (as a string) to
+    attachment list. A failed fetch omits that comment's attachments rather
+    than failing the page.
+    """
+
+    pending = []
+    batch = []
+    for comment in comments:
+        if getattr(comment, 'attachments', 0):
+            url, params, headers = Attachment.build_request(request.get_host(), Comment.api_path_fragment,
+                comment.id, access_token=request.access_token)
+            pending.append((str(comment.id), url))
+            batch.append(fetch.get(url, params=params, headers=headers))
+
+    attachments = {}
+    for (comment_id, url), response in zip(pending, fetch.map(batch)):
+        if response is None:
+            continue
+        try:
+            attachments[comment_id] = Attachment.from_api_response(APIResource.process_response(url, response))
+        except APIException as e:
+            logger.error('Failed to fetch attachments for comment %s: %s' % (comment_id, str(e)))
+    return attachments
 
 
 def build_newest_comment_link(response, request=None):

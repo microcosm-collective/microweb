@@ -29,6 +29,7 @@ from core.forms.forms import CommentForm
 
 from core.views import require_authentication
 from core.views import respond_with_error
+from core.views import fetch_attachments
 from core.views import process_attachments
 from core.views import build_newest_comment_link
 
@@ -100,20 +101,12 @@ def single(request, comment_id):
         }
     )
 
-    # Fetch any attachments on the comment.
-    attachments = {}
-    c = content.as_dict
-    if 'attachments' in c:
-        c_attachments = Attachment.retrieve(request.get_host(), "comments", c['id'],
-                                            access_token=request.access_token)
-        attachments[str(c['id'])] = c_attachments
-
     view_data = {
         'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
         'site': Site(responses[request.site_url]),
         'content': content,
         'comment_form': comment_form,
-        'attachments': attachments
+        'attachments': fetch_attachments(request, [content])
     }
 
     return render(request, single_template, view_data)
