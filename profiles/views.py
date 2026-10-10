@@ -25,6 +25,7 @@ from core.forms.forms import ProfileEdit
 from core.forms.forms import ProfilePatch
 
 from core.views import build_pagination_links
+from core.views import ErrorView
 from core.views import require_authentication
 from core.views import respond_with_error
 
@@ -94,6 +95,10 @@ def list(request):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
+        # The API reports offsets beyond the available profile pages as a
+        # bad request. Treat that as a missing page for the browser user.
+        if exc.status_code == 400:
+            return ErrorView.not_found(request)
         return respond_with_error(request, exc)
 
     profiles = ProfileList(responses[profiles_url])
