@@ -121,6 +121,11 @@
 										<div class="navbar-profile-row-2">
 											<a href="{% url 'list-huddle'%}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope-small"></span></span>{% else %}<span class="sprite sprite-envelope-small"></span>{% endif %} <strong>Messages</strong></a>
 										</div>
+						{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
+						<div class="navbar-profile-row-2">
+							<a href="{% url 'list-reports' %}" data-reports-link><span class="label label-default reports-indicator">!</span> <strong>Reports</strong></a>
+						</div>
+						{% endif %}
 									{% else %}
 										<div class="navbar-profile-row-4">
 										Browsing as <strong>guest</strong>.
@@ -164,6 +169,11 @@
 								<div class="navbar-profile-row-2">
 									<a href="{% url 'list-huddle'%}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope-small"></span></span>{% else %}<span class="sprite sprite-envelope-small"></span>{% endif %} <strong>Messages</strong></a>
 								</div>
+				{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
+				<div class="navbar-profile-row-2">
+					<a href="{% url 'list-reports' %}" data-reports-link><span class="label label-default reports-indicator">!</span> <strong>Reports</strong></a>
+				</div>
+				{% endif %}
 							</div>
 							{% endif %}
 							<ul class="nav navbar-nav">
@@ -347,6 +357,23 @@
 				}
 				</script>
 			{% endif %}
+		{% endif %}
+		{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
+		<script type="text/javascript">
+		(function () {
+			fetch("{% url 'pending-report-count' %}", {credentials: 'same-origin'})
+				.then(function (response) { return response.ok ? response.json() : {count: 0}; })
+				.then(function (data) {
+					if (data.count > 0) {
+						document.querySelectorAll('[data-reports-link] .reports-indicator').forEach(function (indicator) {
+							indicator.classList.remove('label-default');
+							indicator.classList.add('label-warning');
+							indicator.setAttribute('title', data.count + ' reports need attention');
+						});
+					}
+				});
+		})();
+		</script>
 		{% endif %}
 
 {% block js %}{% endblock js%}

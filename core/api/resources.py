@@ -1010,6 +1010,65 @@ class PaginatedList(object):
                     self.links[item['rel']] = {'href': item['href']}
 
 
+class Report(object):
+    """A moderation report for a comment."""
+
+    def __init__(self, data):
+        self.id = data['id']
+        self.comment_id = data.get('commentId')
+        self.comment_link = data.get('commentLink')
+        self.comment = data.get('comment', {})
+        self.state = data.get('state', 'open')
+        self.created_at = parse_timestamp(data['createdAt']) if data.get('createdAt') else None
+        self.updated_at = parse_timestamp(data['updatedAt']) if data.get('updatedAt') else None
+        self.reporters = data.get('reporters', [])
+
+    @classmethod
+    def from_summary(cls, data):
+        return cls(data)
+
+    @staticmethod
+    def build_list_request(host, offset=0, access_token=None):
+        url = build_url(host, ['reports'])
+        params = {'limit': settings.PAGE_SIZE, 'offset': offset}
+        headers = APIResource.make_request_headers(access_token)
+        return url, params, headers
+
+    @staticmethod
+    def update_state(host, report_id, state, note, access_token=None):
+        url = build_url(host, ['reports', report_id])
+        headers = APIResource.make_request_headers(access_token)
+        headers['Content-Type'] = 'application/json'
+        response = requests.patch(url, data=json.dumps({'state': state, 'note': note}), headers=headers)
+        try:
+            resource = response.json()
+        except ValueError:
+            raise APIException('Response is not valid json:\n %s' % response.text, response.status_code)
+        if resource.get('error'):
+            raise APIException(resource['error'], response.status_code, detail=resource.get('data'))
+        return resource.get('data')
+
+
+class ReportList(object):
+    """Paginated reports returned by the moderation queue."""
+
+    def __init__(self, data):
+        self.reports = PaginatedList(data['reports'], Report)
+        self.meta = Meta(data['meta']) if data.get('meta') else None
+
+    @staticmethod
+    def build_request(host, offset=0, access_token=None):
+        return Report.build_list_request(host, offset, access_token)
+
+    @staticmethod
+    def open_count(host, access_token=None):
+        url = build_url(host, ['reports'])
+        params = {'state': 'open', 'limit': 1, 'offset': 0}
+        headers = APIResource.make_request_headers(access_token)
+        data = APIResource.retrieve(url, params, headers)
+        return data['reports']['total']
+
+
 class Breadcrumb(object):
     """
     List of links that describe the ancestor microcosms

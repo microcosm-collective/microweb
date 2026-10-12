@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title }}{% endblock title %}
+
+{% block content %}
+<div class="content-header padded">
+	<div class="row">
+		<div class="col-sm-12">{% include 'breadcrumbs.html' with skipself=True %}</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-6"><h1>Reports</h1></div>
+		<div class="col-sm-6">{% include 'pagination.html' %}</div>
+	</div>
+</div>
+
+<div class="content-body">
+	{% if content.reports.items %}
+	<ul class="list-collection bordered padded">
+	{% for report in content.reports.items %}
+		<li class="comment-item padded">
+			<div class="row">
+				<div class="col-sm-8">
+					<h3>
+						<a href="{% url 'single-comment' report.comment_id %}">Comment #{{ report.comment_id }}</a>
+						<span class="label {% if report.state == 'open' %}label-warning{% else %}label-default{% endif %}">{{ report.state|title }}</span>
+					</h3>
+					{% if report.comment.html %}<div class="comment-item-body">{{ report.comment.html|safe }}</div>{% endif %}
+					{% if report.comment.markdown and not report.comment.html %}<p>{{ report.comment.markdown|linebreaksbr }}</p>{% endif %}
+					<p class="row-meta">Reported by
+						{% for reporter in report.reporters %}
+							{% if not forloop.first %}, {% endif %}{{ reporter.profileName }}{% if reporter.type.title %} — {{ reporter.type.title }}{% endif %}
+						{% empty %}No reporter details available{% endfor %}
+					</p>
+				</div>
+				<div class="col-sm-4">
+					<form method="post" action="{% url 'respond-report' report.id %}">
+						{% csrf_token %}
+						<label for="report-state-{{ report.id }}">Response</label>
+						<select class="form-control" id="report-state-{{ report.id }}" name="state">
+							<option value="open" {% if report.state == 'open' %}selected{% endif %}>Open</option>
+							<option value="reviewing" {% if report.state == 'reviewing' %}selected{% endif %}>Reviewing</option>
+							<option value="closed" {% if report.state == 'closed' %}selected{% endif %}>Closed</option>
+						</select>
+						<label for="report-note-{{ report.id }}">Note (optional)</label>
+						<textarea class="form-control" id="report-note-{{ report.id }}" name="note" rows="2"></textarea>
+						<button class="btn btn-primary" type="submit">Update report</button>
+					</form>
+				</div>
+			</div>
+		</li>
+	{% endfor %}
+	</ul>
+	{% else %}
+		<p class="row-meta">There are no reports.</p>
+	{% endif %}
+</div>
+
+<div class="content-footer padded">
+	<div class="row"><div class="col-sm-6"></div><div class="col-sm-6">{% include 'pagination.html' %}</div></div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div class="metabar-module">
+	<h5>About</h5>
+	<div class="metabar-module-title"><h3>Reports</h3><p>Review comments reported by members and record a response for each case.</p></div>
+</div>
+{% endblock %}

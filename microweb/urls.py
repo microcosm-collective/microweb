@@ -20,6 +20,7 @@ urlpatterns = [
     re_path(r'', include('today.urls')),
     re_path(r'', include('trending.urls')),
     re_path(r'', include('moderation.urls')),
+    re_path(r'', include('reports.urls')),
     re_path(r'', include('ignored.urls')),
     re_path(r'', include('redirect.urls')),
 ]
