@@ -35,6 +35,7 @@ from core.forms.forms import MicrocosmEdit
 from core.views import build_pagination_links
 from core.views import require_authentication
 from core.views import respond_with_error
+from core.views import respond_with_pagination_error
 from core.views import exception_handler
 
 logger = logging.getLogger('microcosm.views')
@@ -64,7 +65,7 @@ def root_microcosm(request):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
 
     microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
@@ -95,7 +96,7 @@ def single_microcosm(request, microcosm_id):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
 
     microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
@@ -231,7 +232,7 @@ def list_members(request, microcosm_id):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
     microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
     roles_url, params, headers = RoleList.build_request(request.META['HTTP_HOST'], id=microcosm_id,
@@ -240,7 +241,7 @@ def list_members(request, microcosm_id):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
     roles = RoleList.from_api_response(responses[roles_url])
 
     view_data = {
@@ -385,7 +386,7 @@ def create_members(request, microcosm_id):
         try:
             responses = response_list_to_dict(fetch.map(request.view_requests))
         except APIException as exc:
-            return respond_with_error(request, exc)
+            return respond_with_pagination_error(request, exc)
 
         microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
@@ -433,7 +434,7 @@ def edit_members(request, microcosm_id, group_id):
         try:
             responses = response_list_to_dict(fetch.map(request.view_requests))
         except APIException as exc:
-            return respond_with_error(request, exc)
+            return respond_with_pagination_error(request, exc)
 
         microcosm = Microcosm.from_api_response(responses[microcosm_url])
         role = Role.from_api_response(responses[role_url])

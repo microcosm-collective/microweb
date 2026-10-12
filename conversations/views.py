@@ -16,6 +16,7 @@ from django.views.decorators.http import require_safe
 from core.views import build_pagination_links
 from core.views import build_newest_comment_link
 from core.views import respond_with_error
+from core.views import respond_with_pagination_error
 from core.views import process_attachments
 
 from core.forms.forms import ConversationCreate
@@ -55,7 +56,7 @@ def single(request, conversation_id):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
 
     conversation = Conversation.from_api_response(responses[conversation_url])
     comment_form = CommentForm(initial=dict(itemId=conversation_id, itemType='conversation'))

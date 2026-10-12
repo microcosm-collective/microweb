@@ -21,6 +21,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.http import require_safe
 
 from core.views import respond_with_error
+from core.views import respond_with_pagination_error
 from core.views import require_authentication
 from core.views import process_attachments
 from core.views import build_pagination_links
@@ -79,7 +80,7 @@ def single(request, event_id):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
     event = Event.from_api_response(responses[event_url])
     comment_form = CommentForm(initial=dict(itemId=event_id, itemType='event'))
 
