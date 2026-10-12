@@ -1,0 +1,29 @@
+<div id="modal-report-comment" class="modal" tabindex="-1" role="dialog" aria-labelledby="modal-report-comment-title" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header navbar-header-wrapper tiling-bg">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+				<h2 class="modal-title" id="modal-report-comment-title">Report comment</h2>
+			</div>
+			<div class="modal-body">
+				<p>Select the reason that best describes why this comment should be reviewed.</p>
+				<div class="alert alert-danger report-error" role="alert" hidden></div>
+				<div class="alert alert-success report-success" role="status" hidden>Thanks. Your report has been submitted.</div>
+				<form id="report-comment-form" action="{% url 'submit-report' %}" method="post" data-types-url="{% url 'report-types' %}">
+					{% csrf_token %}
+					<input type="hidden" name="commentId" value="" />
+					<div class="form-group">
+						<label for="report-comment-type">Reason</label>
+						<select class="form-control" id="report-comment-type" name="type" required disabled>
+							<option value="">Loading reasons...</option>
+						</select>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+						<button type="submit" class="btn btn-primary report-submit" disabled>Submit report</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

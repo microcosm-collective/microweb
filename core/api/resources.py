@@ -1035,6 +1035,19 @@ class Report(object):
         return url, params, headers
 
     @staticmethod
+    def types(host, access_token=None):
+        url = build_url(host, ['reports', 'types'])
+        headers = APIResource.make_request_headers(access_token)
+        return APIResource.retrieve(url, {}, headers)['reportTypes']
+
+    @staticmethod
+    def submit(host, comment_id, type_key, access_token=None):
+        url = build_url(host, ['reports'])
+        headers = APIResource.make_request_headers(access_token)
+        payload = json.dumps({'commentId': comment_id, 'type': type_key})
+        return APIResource.create(url, payload, {}, headers)
+
+    @staticmethod
     def update_state(host, report_id, state, note, access_token=None):
         url = build_url(host, ['reports', report_id])
         headers = APIResource.make_request_headers(access_token)

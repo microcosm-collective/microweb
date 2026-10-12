@@ -64,6 +64,39 @@ def pending_count(request):
     return JsonResponse({'count': count})
 
 
+@require_safe
+def types(request):
+    if not request.access_token:
+        return JsonResponse({'error': 'Sign in to report a comment.'}, status=401)
+    try:
+        report_types = Report.types(request.get_host(), request.access_token)
+    except APIException:
+        return JsonResponse({'error': 'Unable to load report reasons.'}, status=502)
+    return JsonResponse({'reportTypes': report_types})
+
+
+@require_http_methods(['POST'])
+def submit(request):
+    if not request.access_token:
+        return JsonResponse({'error': 'Sign in to report a comment.'}, status=401)
+
+    try:
+        comment_id = int(request.POST.get('commentId', ''))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Choose a comment to report.'}, status=400)
+
+    type_key = request.POST.get('type', '').strip()
+    if not type_key:
+        return JsonResponse({'error': 'Choose a report reason.'}, status=400)
+
+    try:
+        Report.submit(request.get_host(), comment_id, type_key, request.access_token)
+    except APIException as exc:
+        status = exc.status_code if 400 <= exc.status_code < 600 else 502
+        return JsonResponse({'error': 'Unable to submit this report.'}, status=status)
+    return JsonResponse({'success': True})
+
+
 @require_authentication
 @require_http_methods(['POST'])
 @cache_control(must_revalidate=True, max_age=0)
