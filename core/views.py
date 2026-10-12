@@ -143,6 +143,13 @@ def respond_with_error(request, exception):
     else:
         return ErrorView.server_error(request, exception)
 
+
+def respond_with_pagination_error(request, exception):
+    """Treat API bad requests on paginated reads as missing pages."""
+    if isinstance(exception, APIException) and exception.status_code == 400:
+        return ErrorView.not_found(request)
+    return respond_with_error(request, exception)
+
 def require_authentication(view_func):
     """
     Returns HTTP 401 if request.access_token is not present.

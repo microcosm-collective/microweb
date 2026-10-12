@@ -23,10 +23,12 @@ from core.api.resources import Profile
 from core.api.resources import response_list_to_dict
 from core.api.resources import GlobalOptions
 from core.api.resources import Site
+from core.api.resources import APIException
 
 from core.views import exception_handler
 from core.views import build_pagination_links
 from core.views import require_authentication
+from core.views import respond_with_pagination_error
 
 logger = logging.getLogger('updates.views')
 
@@ -58,7 +60,10 @@ class UpdateView(object):
             url, params, headers = UpdateList.build_request(request.get_host(), offset=offset,
                                                             access_token=request.access_token)
             request.view_requests.append(fetch.get(url, params=params, headers=headers))
-            responses = response_list_to_dict(fetch.map(request.view_requests))
+            try:
+                responses = response_list_to_dict(fetch.map(request.view_requests))
+            except APIException as exc:
+                return respond_with_pagination_error(request, exc)
             updates_list = UpdateList(responses[url])
 
             view_data = {
@@ -121,7 +126,10 @@ class WatcherView(object):
             url, params, headers = WatcherList.build_request(request.get_host(), offset=offset,
                                                              access_token=request.access_token)
             request.view_requests.append(fetch.get(url, params=params, headers=headers))
-            responses = response_list_to_dict(fetch.map(request.view_requests))
+            try:
+                responses = response_list_to_dict(fetch.map(request.view_requests))
+            except APIException as exc:
+                return respond_with_pagination_error(request, exc)
             watchers_list = WatcherList(responses[url])
 
             view_data = {

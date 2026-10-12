@@ -27,6 +27,7 @@ from core.views import build_newest_comment_link
 from core.views import build_pagination_links
 from core.views import process_attachments
 from core.views import respond_with_error
+from core.views import respond_with_pagination_error
 from core.views import require_authentication
 
 from core.forms.forms import CommentForm
@@ -58,7 +59,7 @@ def single(request, huddle_id):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
 
     huddle = Huddle.from_api_response(responses[huddle_url])
     comment_form = CommentForm(initial=dict(itemId=huddle_id, itemType='huddle'))
@@ -106,7 +107,7 @@ def list(request):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
 
     huddles = HuddleList(responses[huddle_url])
     
