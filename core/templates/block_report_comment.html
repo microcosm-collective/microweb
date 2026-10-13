@@ -1,0 +1,21 @@
+<div class="report-comment">
+	{% with comment=report.comment %}
+		{% if comment.meta.links.up %}
+			<p class="row-meta">In <a href="{{ comment.meta.links.up.href }}">{{ comment.meta.links.up.title|safe }}</a></p>
+		{% endif %}
+		<div class="comment-item-header">
+			{% if comment.meta.created_by.id %}
+				<a href="{% url 'single-profile' comment.meta.created_by.id %}">@{{ comment.meta.created_by.profile_name|safe }}</a>
+			{% else %}
+				<span>Unknown author</span>
+			{% endif %}
+			{% if comment.meta.created %}
+				&bull; <time datetime="{{ comment.meta.created|date:'c' }}">{{ comment.meta.created|date:'DATETIME_FORMAT' }}</time>
+			{% endif %}
+			&bull; <a href="{% url 'single-comment' comment.id %}">View comment</a>
+		</div>
+		<div class="comment-item-body">
+			{% if comment.html %}{{ comment.html|safe }}{% elif comment.markdown %}{{ comment.markdown|linebreaksbr }}{% endif %}
+		</div>
+	{% endwith %}
+</div>

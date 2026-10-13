@@ -23,13 +23,33 @@
 						<a href="{% url 'single-comment' report.comment_id %}">Comment #{{ report.comment_id }}</a>
 						<span class="label {% if report.state == 'open' %}label-warning{% else %}label-default{% endif %}">{{ report.state|title }}</span>
 					</h3>
-					{% if report.comment.html %}<div class="comment-item-body">{{ report.comment.html|safe }}</div>{% endif %}
-					{% if report.comment.markdown and not report.comment.html %}<p>{{ report.comment.markdown|linebreaksbr }}</p>{% endif %}
+					{% if report.comment %}
+						{% include 'block_report_comment.html' %}
+					{% endif %}
 					<p class="row-meta">Reported by
 						{% for reporter in report.reporters %}
-							{% if not forloop.first %}, {% endif %}{{ reporter.profileName }}{% if reporter.type.title %} — {{ reporter.type.title }}{% endif %}
+							{% if not forloop.first %}, {% endif %}
+							{% if reporter.profile_id %}<a href="{% url 'single-profile' reporter.profile_id %}">@{{ reporter.profile_name }}</a>{% else %}@{{ reporter.profile_name }}{% endif %}{% if reporter.type.title %} — {{ reporter.type.title }}{% endif %}
 						{% empty %}No reporter details available{% endfor %}
 					</p>
+					{% if report.notes %}
+						<div class="report-notes">
+							<h4>Admin comments</h4>
+							<ul class="list-unstyled">
+							{% for note in report.notes %}
+								{% if note.text %}
+								<li class="report-note">
+									<p>{{ note.text|linebreaksbr }}</p>
+									<p class="row-meta">
+										{% if note.author and note.author.id %}<a href="{% url 'single-profile' note.author.id %}">@{{ note.author.profile_name|safe }}</a>{% else %}Admin{% endif %}
+										{% if note.created_at %}&bull; <time datetime="{{ note.created_at|date:'c' }}">{{ note.created_at|date:'DATETIME_FORMAT' }}</time>{% endif %}
+									</p>
+								</li>
+								{% endif %}
+							{% endfor %}
+							</ul>
+						</div>
+					{% endif %}
 				</div>
 				<div class="col-sm-4">
 					<form method="post" action="{% url 'respond-report' report.id %}">

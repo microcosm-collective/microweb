@@ -1017,11 +1017,23 @@ class Report(object):
         self.id = data['id']
         self.comment_id = data.get('commentId')
         self.comment_link = data.get('commentLink')
-        self.comment = data.get('comment', {})
+        comment = data.get('comment', {})
+        try:
+            self.comment = Comment.from_api_response(comment) if comment else None
+        except (KeyError, TypeError):
+            # Older report responses may include a reduced comment summary.
+            self.comment = comment
         self.state = data.get('state', 'open')
         self.created_at = parse_timestamp(data['createdAt']) if data.get('createdAt') else None
         self.updated_at = parse_timestamp(data['updatedAt']) if data.get('updatedAt') else None
-        self.reporters = data.get('reporters', [])
+        self.reporters = [ReportReporter(reporter) for reporter in data.get('reporters', [])]
+        notes = (data.get('notes') or data.get('adminComments') or data.get('responses')
+                 or data.get('history') or data.get('note') or [])
+        if isinstance(notes, dict):
+            notes = notes.get('items') or [notes]
+        if isinstance(notes, str):
+            notes = [{'text': notes, 'createdAt': data.get('updatedAt')}]
+        self.notes = [ReportNote(note, self.updated_at) for note in notes]
 
     @classmethod
     def from_summary(cls, data):
@@ -1060,6 +1072,34 @@ class Report(object):
         if resource.get('error'):
             raise APIException(resource['error'], response.status_code, detail=resource.get('data'))
         return resource.get('data')
+
+
+class ReportReporter(object):
+    """A profile that submitted a report."""
+
+    def __init__(self, data):
+        profile = data.get('profile') or {}
+        self.profile_id = data.get('profileId') or profile.get('id') or data.get('id')
+        self.profile_name = data.get('profileName') or profile.get('profileName') or ''
+        self.type = data.get('type') or {}
+
+
+class ReportNote(object):
+    """An admin note attached to a report."""
+
+    def __init__(self, data, fallback_timestamp=None):
+        if isinstance(data, str):
+            data = {'text': data}
+        if not isinstance(data, dict):
+            data = {}
+        if isinstance(data.get('note'), dict):
+            data = data['note']
+        self.text = (data.get('text') or data.get('message') or data.get('note')
+                     or data.get('comment') or data.get('body') or data.get('content') or '')
+        created = data.get('createdAt') or data.get('created') or data.get('timestamp')
+        self.created_at = parse_timestamp(created) if created else fallback_timestamp
+        author = data.get('createdBy') or data.get('author') or data.get('profile') or {}
+        self.author = Profile(author) if isinstance(author, dict) and author else None
 
 
 class ReportList(object):

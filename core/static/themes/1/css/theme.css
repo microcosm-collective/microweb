@@ -6332,6 +6332,14 @@ td.visible-print {
     padding: 4px
   }
 
+  .navbar-profile .navbar-profile-links {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: left
+  }
+
   .navbar-profile .navbar-profile-row-4 {
     display: block;
     padding-left: 10px
@@ -10408,6 +10416,16 @@ option:disabled {
 
 .label-warning .sprite-envelope-small {
   background-position: -16px -116px
+}
+
+.sprite-flag {
+  width: 12px;
+  height: 18px;
+  background-position: -80px -116px
+}
+
+.sprite-flag:hover, .sprite-flag:active {
+  background-position: -92px -116px
 }
 
 .sprite-italic-small {

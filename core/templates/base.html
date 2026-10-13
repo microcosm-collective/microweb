@@ -118,14 +118,12 @@
 											</div>
 
 										</div>
-										<div class="navbar-profile-row-2">
+										<div class="navbar-profile-row-2 navbar-profile-links">
 											<a href="{% url 'list-huddle'%}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope-small"></span></span>{% else %}<span class="sprite sprite-envelope-small"></span>{% endif %} <strong>Messages</strong></a>
+											{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
+											<a href="{% url 'list-reports' %}" data-reports-link><span class="reports-indicator"><span class="sprite sprite-flag" aria-hidden="true"></span></span> <strong>Reports</strong></a>
+											{% endif %}
 										</div>
-						{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
-						<div class="navbar-profile-row-2">
-							<a href="{% url 'list-reports' %}" data-reports-link><span class="label label-default reports-indicator">!</span> <strong>Reports</strong></a>
-						</div>
-						{% endif %}
 									{% else %}
 										<div class="navbar-profile-row-4">
 										Browsing as <strong>guest</strong>.
@@ -166,14 +164,12 @@
 										<a class="navbar-profile-row-1-huddles" href="{% url 'list-huddle' %}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope"></span></span>{% else %}<span class="sprite sprite-envelope"></span>{% endif %}</a>
 									</div>
 								</div>
-								<div class="navbar-profile-row-2">
+								<div class="navbar-profile-row-2 navbar-profile-links">
 									<a href="{% url 'list-huddle'%}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope-small"></span></span>{% else %}<span class="sprite sprite-envelope-small"></span>{% endif %} <strong>Messages</strong></a>
+									{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
+									<a href="{% url 'list-reports' %}" data-reports-link><span class="reports-indicator"><span class="sprite sprite-flag" aria-hidden="true"></span></span> <strong>Reports</strong></a>
+									{% endif %}
 								</div>
-				{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
-				<div class="navbar-profile-row-2">
-					<a href="{% url 'list-reports' %}" data-reports-link><span class="label label-default reports-indicator">!</span> <strong>Reports</strong></a>
-				</div>
-				{% endif %}
 							</div>
 							{% endif %}
 							<ul class="nav navbar-nav">
