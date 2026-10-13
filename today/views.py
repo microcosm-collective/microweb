@@ -14,7 +14,7 @@ from core.api.resources import Site
 
 from core.api.exceptions import APIException
 
-from core.views import respond_with_error
+from core.views import respond_with_pagination_error
 
 logger = logging.getLogger('today.views')
 single_template = 'today.html'
@@ -41,7 +41,7 @@ def single(request):
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
     except APIException as exc:
-        return respond_with_error(request, exc)
+        return respond_with_pagination_error(request, exc)
     search = Search.from_api_response(responses[url])
 
     view_data = {
