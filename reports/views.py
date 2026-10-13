@@ -42,6 +42,24 @@ def list(request):
         return respond_with_error(request, APIException('Forbidden', 403))
 
     report_list = ReportList(responses[reports_url])
+    detail_requests = []
+    detail_urls = {}
+    for report in report_list.reports.items:
+        detail_url, params, headers = Report.build_request(
+            request.get_host(), report.id, request.access_token)
+        detail_urls[detail_url] = report
+        detail_requests.append(fetch.get(detail_url, params=params, headers=headers))
+
+    if detail_requests:
+        try:
+            details = response_list_to_dict(fetch.map(detail_requests))
+        except APIException:
+            # Keep the queue usable if case history is temporarily unavailable.
+            details = {}
+        for detail_url, report in detail_urls.items():
+            if detail_url in details:
+                report.load_details(details[detail_url])
+
     view_data = {
         'user': user,
         'site': Site(responses[request.site_url]),

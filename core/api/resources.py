@@ -1028,7 +1028,9 @@ class Report(object):
         self.updated_at = parse_timestamp(data['updatedAt']) if data.get('updatedAt') else None
         self.reporters = [ReportReporter(reporter) for reporter in data.get('reporters', [])]
         notes = (data.get('notes') or data.get('adminComments') or data.get('responses')
-                 or data.get('history') or data.get('note') or [])
+                 or data.get('stateChanges') or data.get('history') or data.get('note') or [])
+        # The queue response omits case history; callers that fetched the case
+        # detail can pass its stateChanges through this same parser.
         if isinstance(notes, dict):
             notes = notes.get('items') or [notes]
         if isinstance(notes, str):
@@ -1039,12 +1041,23 @@ class Report(object):
     def from_summary(cls, data):
         return cls(data)
 
+    def load_details(self, data):
+        """Load case history from the single-report response."""
+        self.notes = [ReportNote(change, self.updated_at)
+                      for change in data.get('stateChanges', [])]
+
     @staticmethod
     def build_list_request(host, offset=0, access_token=None):
         url = build_url(host, ['reports'])
         params = {'limit': settings.PAGE_SIZE, 'offset': offset}
         headers = APIResource.make_request_headers(access_token)
         return url, params, headers
+
+    @staticmethod
+    def build_request(host, report_id, access_token=None):
+        url = build_url(host, ['reports', report_id])
+        headers = APIResource.make_request_headers(access_token)
+        return url, {}, headers
 
     @staticmethod
     def types(host, access_token=None):
@@ -1064,7 +1077,10 @@ class Report(object):
         url = build_url(host, ['reports', report_id])
         headers = APIResource.make_request_headers(access_token)
         headers['Content-Type'] = 'application/json'
-        response = requests.patch(url, data=json.dumps({'state': state, 'note': note}), headers=headers)
+        payload = {'state': state}
+        if note:
+            payload['note'] = note
+        response = requests.patch(url, data=json.dumps(payload), headers=headers)
         try:
             resource = response.json()
         except ValueError:
@@ -1094,11 +1110,16 @@ class ReportNote(object):
             data = {}
         if isinstance(data.get('note'), dict):
             data = data['note']
+        self.from_state = data.get('fromState')
+        self.to_state = data.get('toState')
         self.text = (data.get('text') or data.get('message') or data.get('note')
                      or data.get('comment') or data.get('body') or data.get('content') or '')
         created = data.get('createdAt') or data.get('created') or data.get('timestamp')
         self.created_at = parse_timestamp(created) if created else fallback_timestamp
         author = data.get('createdBy') or data.get('author') or data.get('profile') or {}
+        if not author and data.get('changedByProfileId'):
+            author = {'id': data['changedByProfileId'],
+                      'profileName': data.get('changedByProfileName', '')}
         self.author = Profile(author) if isinstance(author, dict) and author else None
 
 
