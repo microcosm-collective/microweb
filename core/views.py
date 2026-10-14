@@ -17,6 +17,7 @@ from functools import wraps
 from django.conf import settings
 
 from django.core.exceptions import ValidationError
+from django.http import HttpResponseBadRequest
 from django.http import HttpResponseNotFound
 from django.http import HttpResponseForbidden
 from django.http import HttpResponseServerError
@@ -136,6 +137,8 @@ def respond_with_error(request, exception):
 
     if exception.status_code == 404:
         return ErrorView.not_found(request)
+    elif exception.status_code == 400:
+        return ErrorView.bad_request(request)
     elif exception.status_code == 403:
         return ErrorView.forbidden(request)
     elif exception.status_code == 401:
@@ -173,10 +176,10 @@ def build_pagination_links(request, paged_list):
         return {}
 
     page_nav = {
-    'page': int(paged_list.page),
-    'total_pages': int(paged_list.total_pages),
-    'limit': int(paged_list.limit),
-    'offset': int(paged_list.offset)
+        'page': int(paged_list.page),
+        'total_pages': int(paged_list.total_pages),
+        'limit': int(paged_list.limit),
+        'offset': int(paged_list.offset)
     }
 
     for item in request:
@@ -303,6 +306,11 @@ class LegalView(object):
 
 
 class ErrorView(object):
+    @staticmethod
+    def bad_request(request, exception=None):
+        view_data = build_error_view_data(request)
+        return HttpResponseBadRequest(loader.get_template('400.html').render(view_data, request))
+
     @staticmethod
     def not_found(request, exception=None):
         view_data = build_error_view_data(request, include_user=True)

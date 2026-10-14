@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Bad Request | {{ site.title | safe }}{% endblock title %}
+
+{% block content %}
+<div class="content-header padded">
+    <h1>Bad Request</h1>
+</div>
+<p class="row-meta">Sorry, we couldn't process that request. Please check the information and try again.</p>
+<p class="row-meta"><a href="/">Click here to go back to the homepage</a>.</p>
+{% endblock %}
