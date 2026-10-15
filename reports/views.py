@@ -42,24 +42,6 @@ def list(request):
         return respond_with_error(request, APIException('Forbidden', 403))
 
     report_list = ReportList(responses[reports_url])
-    detail_requests = []
-    detail_urls = {}
-    for report in report_list.reports.items:
-        detail_url, params, headers = Report.build_request(
-            request.get_host(), report.id, request.access_token)
-        detail_urls[detail_url] = report
-        detail_requests.append(fetch.get(detail_url, params=params, headers=headers))
-
-    if detail_requests:
-        try:
-            details = response_list_to_dict(fetch.map(detail_requests))
-        except APIException:
-            # Keep the queue usable if case history is temporarily unavailable.
-            details = {}
-        for detail_url, report in detail_urls.items():
-            if detail_url in details:
-                report.load_details(details[detail_url])
-
     view_data = {
         'user': user,
         'site': Site(responses[request.site_url]),
@@ -68,18 +50,6 @@ def list(request):
         'site_section': 'reports',
     }
     return render(request, 'reports.html', view_data)
-
-
-@require_authentication
-@require_safe
-@cache_control(no_cache=True, no_store=True, must_revalidate=True, max_age=0)
-def pending_count(request):
-    """Return the number of open cases for the admin navbar indicator."""
-    try:
-        count = ReportList.open_count(request.get_host(), request.access_token)
-    except APIException:
-        count = 0
-    return JsonResponse({'count': count})
 
 
 @require_safe

@@ -1023,10 +1023,13 @@ class Report(object):
         except (KeyError, TypeError):
             # Older report responses may include a reduced comment summary.
             self.comment = comment
+        self.comment_edits = [ReportCommentEdit(edit) for edit in data.get('commentEdits', [])]
         self.state = data.get('state', 'open')
         self.created_at = parse_timestamp(data['createdAt']) if data.get('createdAt') else None
         self.updated_at = parse_timestamp(data['updatedAt']) if data.get('updatedAt') else None
         self.reporters = [ReportReporter(reporter) for reporter in data.get('reporters', [])]
+        self.state_changes = [ReportNote(change, self.updated_at)
+                              for change in data.get('stateChanges', [])]
         notes = (data.get('notes') or data.get('adminComments') or data.get('responses')
                  or data.get('stateChanges') or data.get('history') or data.get('note') or [])
         # The queue response omits case history; callers that fetched the case
@@ -1036,6 +1039,7 @@ class Report(object):
         if isinstance(notes, str):
             notes = [{'text': notes, 'createdAt': data.get('updatedAt')}]
         self.notes = [ReportNote(note, self.updated_at) for note in notes]
+        self.activity = self._build_activity()
 
     @classmethod
     def from_summary(cls, data):
@@ -1045,6 +1049,21 @@ class Report(object):
         """Load case history from the single-report response."""
         self.notes = [ReportNote(change, self.updated_at)
                       for change in data.get('stateChanges', [])]
+        self.state_changes = self.notes
+        self.activity = self._build_activity()
+
+    def _build_activity(self):
+        activity = []
+        for edit in self.comment_edits:
+            if edit.created_at:
+                activity.append({'kind': 'edit', 'timestamp': edit.created_at, 'edit': edit})
+        for reporter in self.reporters:
+            if reporter.created_at:
+                activity.append({'kind': 'report', 'timestamp': reporter.created_at, 'reporter': reporter})
+        for change in self.state_changes:
+            if change.created_at:
+                activity.append({'kind': 'state', 'timestamp': change.created_at, 'change': change})
+        return sorted(activity, key=lambda event: event['timestamp'])
 
     @staticmethod
     def build_list_request(host, offset=0, access_token=None):
@@ -1098,6 +1117,19 @@ class ReportReporter(object):
         self.profile_id = data.get('profileId') or profile.get('id') or data.get('id')
         self.profile_name = data.get('profileName') or profile.get('profileName') or ''
         self.type = data.get('type') or {}
+        created = data.get('createdAt') or data.get('created')
+        self.created_at = parse_timestamp(created) if created else None
+
+
+class ReportCommentEdit(object):
+    """Summary of an edit to the reported comment."""
+
+    def __init__(self, data):
+        self.profile_id = data.get('profileId')
+        profile = data.get('profile')
+        self.profile = Profile(profile) if isinstance(profile, dict) and profile else None
+        created = data.get('createdAt') or data.get('created')
+        self.created_at = parse_timestamp(created) if created else None
 
 
 class ReportNote(object):
@@ -1136,11 +1168,10 @@ class ReportList(object):
 
     @staticmethod
     def open_count(host, access_token=None):
-        url = build_url(host, ['reports'])
-        params = {'state': 'open', 'limit': 1, 'offset': 0}
+        url = build_url(host, ['reports', 'count'])
         headers = APIResource.make_request_headers(access_token)
-        data = APIResource.retrieve(url, params, headers)
-        return data['reports']['total']
+        data = APIResource.retrieve(url, {}, headers)
+        return data['count']
 
 
 class Breadcrumb(object):
@@ -1973,6 +2004,19 @@ class Attendee(object):
         return attendee
 
 
+class CommentAttachment(object):
+    """Attachment metadata included with a comment in a report response."""
+
+    def __init__(self, data):
+        self.file_name = data.get('fileName', '')
+        self.file_ext = data.get('fileExt', '')
+        links = (data.get('meta') or {}).get('links', [])
+        link = next((item for item in links if item.get('rel') in ('self', 'file')), None)
+        if link is None and links:
+            link = links[0]
+        self.href = (link or {}).get('href') or data.get('href') or data.get('url', '')
+
+
 class Comment(APIResource):
     """
     Represents a single comment.
@@ -1991,6 +2035,8 @@ class Comment(APIResource):
             comment.in_reply_to = data['inReplyTo']
         if data.get('attachments'):
             comment.attachments = data['attachments']
+        comment.attachment_details = [CommentAttachment(attachment)
+                                      for attachment in data.get('attachmentDetails', [])]
         if data.get('firstLine'):
             comment.first_line = data['firstLine']
         comment.markdown = data['markdown']

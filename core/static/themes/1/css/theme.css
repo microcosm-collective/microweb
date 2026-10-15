@@ -7891,6 +7891,10 @@ time.plain {
   font-size: 16px
 }
 
+.reported-comment .comment-item-permalink {
+  color: #999
+}
+
 .comment-item-header-admin {
   float: right;
   margin-left: 10px
@@ -8053,6 +8057,16 @@ time.plain {
     margin-left: 104px;
     margin-right: 20px
   }
+
+  .reported-comment .comment-item-author img {
+    left: 20px
+  }
+
+  .reported-comment .comment-item-inner {
+    margin-left: 104px;
+    margin-right: 20px
+  }
+
 }
 
 .list-comments-dull {
@@ -10425,7 +10439,7 @@ option:disabled {
   background-position: -80px -116px
 }
 
-.sprite-flag:hover, .sprite-flag:active {
+.sprite-flag-active {
   background-position: -92px -116px
 }
 

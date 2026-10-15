@@ -6,8 +6,7 @@
 		<div class="comment-item-header">
 			<div class="comment-item-permalink">
 				<time datetime="{{ comment.meta.created|date:"c" }}" itemprop="dateCreated"></time>
-				<span style="color:#eee">&bull;</span>
-				{% if user %}<button type="button" class="btn btn-link btn-xs report-comment" data-comment-id="{{ comment.id }}" aria-label="Report comment" title="Report comment"><span class="sprite sprite-flag" aria-hidden="true"></span></button>{% endif %}
+				{% if user %}<button type="button" class="btn btn-link btn-xs report-comment" data-comment-id="{{ comment.id }}" aria-label="Report comment" title="Report comment"><span class="sprite sprite-flag" aria-hidden="true"></span></button>{% else %}<span style="color:#eee">&bull;</span>{% endif %}
 				{% if hide_permalink %}
 					<a href="{% url 'single-comment' comment.id %}"><span class="sprite sprite-format-link" itemprop="discussionUrl"></span></a>
 				{% else %}
