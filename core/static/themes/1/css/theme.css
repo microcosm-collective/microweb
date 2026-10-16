@@ -4975,6 +4975,18 @@ body.modal-open,
   line-height: 1.5
 }
 
+#modal-report-comment .modal-title {
+  font-size: 22px;
+}
+
+#modal-report-comment .modal-body > p {
+  font-size: 15px;
+}
+
+#modal-report-comment .report-close[hidden] {
+  display: none !important;
+}
+
 .modal-body {
   position: relative;
   padding: 20px

@@ -76,9 +76,10 @@ def submit(request):
     type_key = request.POST.get('type', '').strip()
     if not type_key:
         return JsonResponse({'error': 'Choose a report reason.'}, status=400)
+    note = request.POST.get('note', '').strip()
 
     try:
-        Report.submit(request.get_host(), comment_id, type_key, request.access_token)
+        Report.submit(request.get_host(), comment_id, type_key, request.access_token, note=note)
     except APIException as exc:
         status = exc.status_code if 400 <= exc.status_code < 600 else 502
         return JsonResponse({'error': 'Unable to submit this report.'}, status=status)

@@ -1085,10 +1085,13 @@ class Report(object):
         return APIResource.retrieve(url, {}, headers)['reportTypes']
 
     @staticmethod
-    def submit(host, comment_id, type_key, access_token=None):
+    def submit(host, comment_id, type_key, access_token=None, note=None):
         url = build_url(host, ['reports'])
         headers = APIResource.make_request_headers(access_token)
-        payload = json.dumps({'commentId': comment_id, 'type': type_key})
+        report = {'commentId': comment_id, 'type': type_key}
+        if note:
+            report['note'] = note
+        payload = json.dumps(report)
         return APIResource.create(url, payload, {}, headers)
 
     @staticmethod
@@ -1117,6 +1120,7 @@ class ReportReporter(object):
         self.profile_id = data.get('profileId') or profile.get('id') or data.get('id')
         self.profile_name = data.get('profileName') or profile.get('profileName') or ''
         self.type = data.get('type') or {}
+        self.note = data.get('note') or ''
         created = data.get('createdAt') or data.get('created')
         self.created_at = parse_timestamp(created) if created else None
 

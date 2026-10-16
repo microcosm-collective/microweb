@@ -14,7 +14,11 @@
 					{% endif %}
 				</div>
 			</div>
-			{% if comment.meta.links.up %}<p class="row-meta">In <a href="{% url 'incontext-comment' comment.id %}">{{ comment.meta.links.up.title|safe }}</a></p>{% endif %}
+			{% if comment.item_type == 'huddle' %}
+				<p class="row-meta">In a private huddle</p>
+			{% elif comment.meta.links.up %}
+				<p class="row-meta">In <a href="{% url 'incontext-comment' comment.id %}">{{ comment.meta.links.up.title|safe }}</a></p>
+			{% endif %}
 			<div class="comment-item-body" itemprop="text">
 				{% if comment.html %}{{ comment.html|safe }}{% elif comment.markdown %}{{ comment.markdown|linebreaksbr }}{% endif %}
 				{% if comment.attachment_details %}

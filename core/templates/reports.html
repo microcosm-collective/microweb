@@ -36,9 +36,9 @@
 								{% if event.kind == 'edit' %}
 					{% if event.edit.profile and event.edit.profile.id %}<a href="{% url 'single-profile' event.edit.profile.id %}">@{{ event.edit.profile.profile_name|safe }}</a>{% else %}Comment author{% endif %} edited the comment
 								{% elif event.kind == 'report' %}
-					{% if event.reporter.profile_id %}<a href="{% url 'single-profile' event.reporter.profile_id %}">@{{ event.reporter.profile_name|safe }}</a>{% else %}@{{ event.reporter.profile_name|safe }}{% endif %} reported this comment{% if event.reporter.type.title %} for {{ event.reporter.type.title }}{% endif %}
+					{% if event.reporter.profile_id %}<a href="{% url 'single-profile' event.reporter.profile_id %}">@{{ event.reporter.profile_name|safe }}</a>{% else %}@{{ event.reporter.profile_name|safe }}{% endif %} reported this comment{% if event.reporter.type.title %} for <b>{{ event.reporter.type.title }}</b>{% endif %}.{% if event.reporter.note %} Note: <i>{{ event.reporter.note|linebreaksbr }}</i>{% endif %}
 								{% else %}
-					{% if event.change.author and event.change.author.id %}<a href="{% url 'single-profile' event.change.author.id %}">@{{ event.change.author.profile_name|safe }}</a>{% else %}Admin{% endif %} updated the report{% if event.change.from_state or event.change.to_state %} from {{ event.change.from_state|default:'New'|title }} to {{ event.change.to_state|title }}{% endif %}{% if event.change.text %}: {{ event.change.text|linebreaksbr }}{% endif %}
+					{% if event.change.author and event.change.author.id %}<a href="{% url 'single-profile' event.change.author.id %}">@{{ event.change.author.profile_name|safe }}</a>{% else %}Admin{% endif %} updated the report{% if event.change.from_state or event.change.to_state %} from {{ event.change.from_state|default:'New'|title }} to <b>{{ event.change.to_state|title }}</b>{% endif %}.{% if event.change.text %} Note: <i>{{ event.change.text|linebreaksbr }}</i>{% endif %}
 								{% endif %}
 					<time class="pull-right" datetime="{{ event.timestamp|date:'c' }}">{{ event.timestamp|date:'DATETIME_FORMAT' }}</time>
 				</p>

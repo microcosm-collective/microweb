@@ -4,7 +4,11 @@
   var $modal = $('#modal-report-comment');
   var $form = $('#report-comment-form');
   var $type = $('#report-comment-type');
+  var $note = $('#report-comment-note');
   var $submit = $form.find('.report-submit');
+  var $cancel = $form.find('.report-cancel');
+  var $close = $form.find('.report-close');
+  var $actions = $form.find('.report-actions');
   var $error = $modal.find('.report-error');
   var $success = $modal.find('.report-success');
   var typesRequest = null;
@@ -17,8 +21,11 @@
   $(document).on('click', '.report-comment', function () {
     activeButton = $(this);
     $form.find('[name="commentId"]').val(activeButton.data('comment-id'));
+    $note.val('');
     $error.prop('hidden', true).text('');
     $success.prop('hidden', true);
+    $actions.prop('hidden', false);
+    $close.prop('hidden', true);
     $type.empty().append($('<option>', {value: '', text: 'Loading reasons...'})).prop('disabled', true);
     $submit.prop('disabled', true);
 
@@ -64,6 +71,8 @@
       submitted = true;
       $success.prop('hidden', false);
       $type.prop('disabled', true);
+      $actions.prop('hidden', true);
+      $close.prop('hidden', false);
       if (activeButton) {
         activeButton.text('Reported').prop('disabled', true);
       }
