@@ -1,0 +1,43 @@
+<div class="reported-comment">
+	{% load is_image %}
+	{% with comment=report.comment %}
+		<div class="comment-item-inner">
+			<div class="comment-item-header">
+				<div class="comment-item-permalink">
+					{% if comment.meta.created %}<time datetime="{{ comment.meta.created|date:'c' }}">{{ comment.meta.created|date:'DATETIME_FORMAT' }}</time>{% endif %}
+				</div>
+				<div class="comment-item-author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+					{% if comment.meta.created_by.id %}
+						<a href="{% url 'single-profile' comment.meta.created_by.id %}" itemprop="url"><img src="{% if 'gravatar' in comment.meta.created_by.avatar %}{{ comment.meta.created_by.avatar }}{% elif 'files' in comment.meta.created_by.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ comment.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ comment.meta.created_by.profile_name|safe }}" class="gravatar" itemprop="image" /> <strong class="comment-item-author-name" itemprop="name">{{ comment.meta.created_by.profile_name|safe|truncatechars:25 }}</strong></a>
+					{% else %}
+						<img src="/static/img/avatar.gif" alt="" class="gravatar" /> <strong class="comment-item-author-name">Unknown author</strong>
+					{% endif %}
+					{% if comment.item_type == 'huddle' %}
+						<span class="row-meta">in a private huddle</span>
+					{% elif comment.meta.links.up %}
+						<span class="row-meta">in <a href="{% url 'incontext-comment' comment.id %}">{{ comment.meta.links.up.title|safe }}</a></span>
+					{% endif %}
+				</div>
+			</div>
+			<div class="comment-item-body" itemprop="text">
+				{% if comment.html %}{{ comment.html|safe }}{% elif comment.markdown %}{{ comment.markdown|linebreaksbr }}{% endif %}
+				{% if comment.attachment_details %}
+					<hr />
+					<p><b>{{ comment.attachment_details|length }} Attachment{{ comment.attachment_details|length|pluralize }}</b></p>
+					<ul class="comment-item-body-attachments clearfix">
+					{% for attachment in comment.attachment_details %}
+						{% if not attachment.file_ext|is_image %}
+							<li class="attachment-link"><a href="https://{{ site.subdomain_key }}.microcosm.app{{ attachment.href }}" title="{{ attachment.file_name }}">{{ attachment.file_name }}</a></li>
+						{% endif %}
+					{% endfor %}
+					{% for attachment in comment.attachment_details %}
+						{% if attachment.file_ext|is_image %}
+							<li class="attachment-image"><a href="https://{{ site.subdomain_key }}.microcosm.app{{ attachment.href }}"><img src="https://{{ site.subdomain_key }}.microcosm.app{{ attachment.href }}" alt="{{ attachment.file_name }}" title="{{ attachment.file_name }}" /></a></li>
+						{% endif %}
+					{% endfor %}
+					</ul>
+				{% endif %}
+			</div>
+		</div>
+	{% endwith %}
+</div>

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title }}{% endblock title %}
+
+{% block content %}
+<div class="content-header padded">
+	<div class="row">
+		<div class="col-sm-12">{% include 'breadcrumbs.html' with skipself=True %}</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-6"><h1>Reports</h1></div>
+		<div class="col-sm-6">{% include 'pagination.html' %}</div>
+	</div>
+</div>
+
+<div class="content-body">
+	{% if content.reports.items %}
+	<ul class="list-collection bordered padded">
+	{% for report in content.reports.items %}
+		<li class="comment-item padded">
+			<div class="row">
+				<div class="col-sm-12">
+					<h3>
+						<a href="{% url 'single-comment' report.comment_id %}">Comment #{{ report.comment_id }}</a>
+						<span class="label {% if report.state == 'open' %}label-warning{% else %}label-default{% endif %}">{{ report.state|title }}</span>
+					</h3>
+					{% if report.comment %}
+						{% include 'block_report_comment.html' %}
+					{% endif %}
+					<div class="report-activity">
+						<h4>History</h4>
+						{% if report.activity %}
+						<ul class="list-unstyled">
+						{% for event in report.activity %}
+							<li class="report-note">
+				<p class="row-meta">
+								{% if event.kind == 'edit' %}
+					{% if event.edit.profile and event.edit.profile.id %}<a href="{% url 'single-profile' event.edit.profile.id %}">@{{ event.edit.profile.profile_name|safe }}</a>{% else %}Comment author{% endif %} edited the comment
+								{% elif event.kind == 'report' %}
+					{% if event.reporter.profile_id %}<a href="{% url 'single-profile' event.reporter.profile_id %}">@{{ event.reporter.profile_name|safe }}</a>{% else %}@{{ event.reporter.profile_name|safe }}{% endif %} reported this comment{% if event.reporter.type.title %} for <b>{{ event.reporter.type.title }}</b>{% endif %}.{% if event.reporter.note %} Note: <i>{{ event.reporter.note|linebreaksbr }}</i>{% endif %}
+								{% else %}
+					{% if event.change.author and event.change.author.id %}<a href="{% url 'single-profile' event.change.author.id %}">@{{ event.change.author.profile_name|safe }}</a>{% else %}Admin{% endif %} updated the report{% if event.change.from_state or event.change.to_state %} from {{ event.change.from_state|default:'New'|title }} to <b>{{ event.change.to_state|title }}</b>{% endif %}.{% if event.change.text %} Note: <i>{{ event.change.text|linebreaksbr }}</i>{% endif %}
+								{% endif %}
+					<time class="pull-right" datetime="{{ event.timestamp|date:'c' }}">{{ event.timestamp|date:'DATETIME_FORMAT' }}</time>
+				</p>
+							</li>
+						{% endfor %}
+						</ul>
+						{% else %}
+						<p class="row-meta">No activity recorded.</p>
+						{% endif %}
+					</div>
+					<div class="report-response">
+					<form method="post" action="{% url 'respond-report' report.id %}">
+						{% csrf_token %}
+						<div class="row">
+							<div class="col-sm-4">
+								<label for="report-state-{{ report.id }}">Response</label>
+								<select class="form-control" id="report-state-{{ report.id }}" name="state">
+									<option value="open" {% if report.state == 'open' %}selected{% endif %}>Open</option>
+									<option value="reviewing" {% if report.state == 'reviewing' %}selected{% endif %}>Reviewing</option>
+									<option value="closed" {% if report.state == 'closed' %}selected{% endif %}>Closed</option>
+								</select>
+							</div>
+							<div class="col-sm-8">
+								<label for="report-note-{{ report.id }}">Note (optional)</label>
+								<textarea class="form-control" id="report-note-{{ report.id }}" name="note" rows="2"></textarea>
+							</div>
+						</div>
+						<div class="text-right" style="margin-top: 10px;">
+							<button class="btn btn-primary" type="submit">Update report</button>
+						</div>
+					</form>
+					</div>
+				</div>
+			</div>
+		</li>
+	{% endfor %}
+	</ul>
+	{% else %}
+		<p class="row-meta">There are no reports.</p>
+	{% endif %}
+</div>
+
+<div class="content-footer padded">
+	<div class="row"><div class="col-sm-6"></div><div class="col-sm-6">{% include 'pagination.html' %}</div></div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div class="metabar-module">
+	<h5>About</h5>
+	<div class="metabar-module-title"><h3>Reports</h3><p>Review comments reported by members and record a response for each case.</p></div>
+</div>
+{% endblock %}

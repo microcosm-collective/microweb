@@ -1,4 +1,5 @@
-{% load static %}
+{% load static report_count %}
+{% report_count user request as pending_reports %}
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -118,8 +119,11 @@
 											</div>
 
 										</div>
-										<div class="navbar-profile-row-2">
+										<div class="navbar-profile-row-2 navbar-profile-links">
 											<a href="{% url 'list-huddle'%}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope-small"></span></span>{% else %}<span class="sprite sprite-envelope-small"></span>{% endif %} <strong>Messages</strong></a>
+											{% if user.meta.permissions.siteOwner or user.meta.permissions.moderator %}
+											<a href="{% url 'list-reports' %}"><span class="reports-indicator"><span class="sprite sprite-flag{% if pending_reports %} sprite-flag-active{% endif %}" aria-hidden="true"></span></span> <strong>Reports</strong></a>
+											{% endif %}
 										</div>
 									{% else %}
 										<div class="navbar-profile-row-4">
@@ -161,8 +165,11 @@
 										<a class="navbar-profile-row-1-huddles" href="{% url 'list-huddle' %}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope"></span></span>{% else %}<span class="sprite sprite-envelope"></span>{% endif %}</a>
 									</div>
 								</div>
-								<div class="navbar-profile-row-2">
+								<div class="navbar-profile-row-2 navbar-profile-links">
 									<a href="{% url 'list-huddle'%}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope-small"></span></span>{% else %}<span class="sprite sprite-envelope-small"></span>{% endif %} <strong>Messages</strong></a>
+									{% if user.meta.permissions.siteOwner or user.meta.permissions.moderator %}
+									<a href="{% url 'list-reports' %}"><span class="reports-indicator"><span class="sprite sprite-flag{% if pending_reports %} sprite-flag-active{% endif %}" aria-hidden="true"></span></span> <strong>Reports</strong></a>
+									{% endif %}
 								</div>
 							</div>
 							{% endif %}
@@ -296,12 +303,14 @@
         </div>
 		{% endif %}
 
+		{% if user %}{% include 'modal_report_comment.html' %}{% endif %}
 		<script src="{{ STATIC_URL }}3rd/jquery/1.10.2/jquery.min.js"></script>
 		<script src="{{ STATIC_URL }}3rd/moment.js/2.10.6/moment.min.js"></script>
 		<script src="{% static "3rd/prettify/r298/prettify.js" %}"></script>
 		<script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
 		<script src="{{ STATIC_URL }}js/base.js"></script>
 		<script src="{{ STATIC_URL }}js/metabar.js?v=20160619"></script>
+		{% if user %}<script src="{{ STATIC_URL }}js/report-comment.js"></script>{% endif %}
 
 		<!-- Signout form is universal to all auth methods -->
 		<form id="signout-form" class="hidden" method="POST" action="{% url 'logout' %}">
@@ -348,7 +357,6 @@
 				</script>
 			{% endif %}
 		{% endif %}
-
 {% block js %}{% endblock js%}
 
 {% if site.subdomain_key == "espruino" %}<script src="//www.espruino.com/js/forum.js" type="text/javascript" async></script>{% endif %}

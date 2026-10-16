@@ -1010,6 +1010,174 @@ class PaginatedList(object):
                     self.links[item['rel']] = {'href': item['href']}
 
 
+class Report(object):
+    """A moderation report for a comment."""
+
+    def __init__(self, data):
+        self.id = data['id']
+        self.comment_id = data.get('commentId')
+        self.comment_link = data.get('commentLink')
+        comment = data.get('comment', {})
+        try:
+            self.comment = Comment.from_api_response(comment) if comment else None
+        except (KeyError, TypeError):
+            # Older report responses may include a reduced comment summary.
+            self.comment = comment
+        self.comment_edits = [ReportCommentEdit(edit) for edit in data.get('commentEdits', [])]
+        self.state = data.get('state', 'open')
+        self.created_at = parse_timestamp(data['createdAt']) if data.get('createdAt') else None
+        self.updated_at = parse_timestamp(data['updatedAt']) if data.get('updatedAt') else None
+        self.reporters = [ReportReporter(reporter) for reporter in data.get('reporters', [])]
+        self.state_changes = [ReportNote(change, self.updated_at)
+                              for change in data.get('stateChanges', [])]
+        notes = (data.get('notes') or data.get('adminComments') or data.get('responses')
+                 or data.get('stateChanges') or data.get('history') or data.get('note') or [])
+        # The queue response omits case history; callers that fetched the case
+        # detail can pass its stateChanges through this same parser.
+        if isinstance(notes, dict):
+            notes = notes.get('items') or [notes]
+        if isinstance(notes, str):
+            notes = [{'text': notes, 'createdAt': data.get('updatedAt')}]
+        self.notes = [ReportNote(note, self.updated_at) for note in notes]
+        self.activity = self._build_activity()
+
+    @classmethod
+    def from_summary(cls, data):
+        return cls(data)
+
+    def load_details(self, data):
+        """Load case history from the single-report response."""
+        self.notes = [ReportNote(change, self.updated_at)
+                      for change in data.get('stateChanges', [])]
+        self.state_changes = self.notes
+        self.activity = self._build_activity()
+
+    def _build_activity(self):
+        activity = []
+        for edit in self.comment_edits:
+            if edit.created_at:
+                activity.append({'kind': 'edit', 'timestamp': edit.created_at, 'edit': edit})
+        for reporter in self.reporters:
+            if reporter.created_at:
+                activity.append({'kind': 'report', 'timestamp': reporter.created_at, 'reporter': reporter})
+        for change in self.state_changes:
+            if change.created_at:
+                activity.append({'kind': 'state', 'timestamp': change.created_at, 'change': change})
+        return sorted(activity, key=lambda event: event['timestamp'])
+
+    @staticmethod
+    def build_list_request(host, offset=0, access_token=None):
+        url = build_url(host, ['reports'])
+        params = {'limit': settings.PAGE_SIZE, 'offset': offset}
+        headers = APIResource.make_request_headers(access_token)
+        return url, params, headers
+
+    @staticmethod
+    def build_request(host, report_id, access_token=None):
+        url = build_url(host, ['reports', report_id])
+        headers = APIResource.make_request_headers(access_token)
+        return url, {}, headers
+
+    @staticmethod
+    def types(host, access_token=None):
+        url = build_url(host, ['reports', 'types'])
+        headers = APIResource.make_request_headers(access_token)
+        return APIResource.retrieve(url, {}, headers)['reportTypes']
+
+    @staticmethod
+    def submit(host, comment_id, type_key, access_token=None, note=None):
+        url = build_url(host, ['reports'])
+        headers = APIResource.make_request_headers(access_token)
+        report = {'commentId': comment_id, 'type': type_key}
+        if note:
+            report['note'] = note
+        payload = json.dumps(report)
+        return APIResource.create(url, payload, {}, headers)
+
+    @staticmethod
+    def update_state(host, report_id, state, note, access_token=None):
+        url = build_url(host, ['reports', report_id])
+        headers = APIResource.make_request_headers(access_token)
+        headers['Content-Type'] = 'application/json'
+        payload = {'state': state}
+        if note:
+            payload['note'] = note
+        response = requests.patch(url, data=json.dumps(payload), headers=headers)
+        try:
+            resource = response.json()
+        except ValueError:
+            raise APIException('Response is not valid json:\n %s' % response.text, response.status_code)
+        if resource.get('error'):
+            raise APIException(resource['error'], response.status_code, detail=resource.get('data'))
+        return resource.get('data')
+
+
+class ReportReporter(object):
+    """A profile that submitted a report."""
+
+    def __init__(self, data):
+        profile = data.get('profile') or {}
+        self.profile_id = data.get('profileId') or profile.get('id') or data.get('id')
+        self.profile_name = data.get('profileName') or profile.get('profileName') or ''
+        self.type = data.get('type') or {}
+        self.note = data.get('note') or ''
+        created = data.get('createdAt') or data.get('created')
+        self.created_at = parse_timestamp(created) if created else None
+
+
+class ReportCommentEdit(object):
+    """Summary of an edit to the reported comment."""
+
+    def __init__(self, data):
+        self.profile_id = data.get('profileId')
+        profile = data.get('profile')
+        self.profile = Profile(profile) if isinstance(profile, dict) and profile else None
+        created = data.get('createdAt') or data.get('created')
+        self.created_at = parse_timestamp(created) if created else None
+
+
+class ReportNote(object):
+    """An admin note attached to a report."""
+
+    def __init__(self, data, fallback_timestamp=None):
+        if isinstance(data, str):
+            data = {'text': data}
+        if not isinstance(data, dict):
+            data = {}
+        if isinstance(data.get('note'), dict):
+            data = data['note']
+        self.from_state = data.get('fromState')
+        self.to_state = data.get('toState')
+        self.text = (data.get('text') or data.get('message') or data.get('note')
+                     or data.get('comment') or data.get('body') or data.get('content') or '')
+        created = data.get('createdAt') or data.get('created') or data.get('timestamp')
+        self.created_at = parse_timestamp(created) if created else fallback_timestamp
+        author = data.get('createdBy') or data.get('author') or data.get('profile') or {}
+        if not author and data.get('changedByProfileId'):
+            author = {'id': data['changedByProfileId'],
+                      'profileName': data.get('changedByProfileName', '')}
+        self.author = Profile(author) if isinstance(author, dict) and author else None
+
+
+class ReportList(object):
+    """Paginated reports returned by the moderation queue."""
+
+    def __init__(self, data):
+        self.reports = PaginatedList(data['reports'], Report)
+        self.meta = Meta(data['meta']) if data.get('meta') else None
+
+    @staticmethod
+    def build_request(host, offset=0, access_token=None):
+        return Report.build_list_request(host, offset, access_token)
+
+    @staticmethod
+    def open_count(host, access_token=None):
+        url = build_url(host, ['reports', 'count'])
+        headers = APIResource.make_request_headers(access_token)
+        data = APIResource.retrieve(url, {}, headers)
+        return data['count']
+
+
 class Breadcrumb(object):
     """
     List of links that describe the ancestor microcosms
@@ -1840,6 +2008,19 @@ class Attendee(object):
         return attendee
 
 
+class CommentAttachment(object):
+    """Attachment metadata included with a comment in a report response."""
+
+    def __init__(self, data):
+        self.file_name = data.get('fileName', '')
+        self.file_ext = data.get('fileExt', '')
+        links = (data.get('meta') or {}).get('links', [])
+        link = next((item for item in links if item.get('rel') in ('self', 'file')), None)
+        if link is None and links:
+            link = links[0]
+        self.href = (link or {}).get('href') or data.get('href') or data.get('url', '')
+
+
 class Comment(APIResource):
     """
     Represents a single comment.
@@ -1858,6 +2039,8 @@ class Comment(APIResource):
             comment.in_reply_to = data['inReplyTo']
         if data.get('attachments'):
             comment.attachments = data['attachments']
+        comment.attachment_details = [CommentAttachment(attachment)
+                                      for attachment in data.get('attachmentDetails', [])]
         if data.get('firstLine'):
             comment.first_line = data['firstLine']
         comment.markdown = data['markdown']
