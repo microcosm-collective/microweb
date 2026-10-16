@@ -11,7 +11,7 @@ register = template.Library()
 def report_count(user, request):
     permissions = getattr(getattr(user, 'meta', None), 'permissions', None)
     if not permissions or not (
-        permissions.siteOwner or permissions.owner or permissions.moderator
+        permissions.siteOwner or permissions.moderator
     ):
         return 0
 

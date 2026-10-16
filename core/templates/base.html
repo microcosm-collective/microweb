@@ -121,7 +121,7 @@
 										</div>
 										<div class="navbar-profile-row-2 navbar-profile-links">
 											<a href="{% url 'list-huddle'%}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope-small"></span></span>{% else %}<span class="sprite sprite-envelope-small"></span>{% endif %} <strong>Messages</strong></a>
-											{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
+											{% if user.meta.permissions.siteOwner or user.meta.permissions.moderator %}
 											<a href="{% url 'list-reports' %}"><span class="reports-indicator"><span class="sprite sprite-flag{% if pending_reports %} sprite-flag-active{% endif %}" aria-hidden="true"></span></span> <strong>Reports</strong></a>
 											{% endif %}
 										</div>
@@ -167,7 +167,7 @@
 								</div>
 								<div class="navbar-profile-row-2 navbar-profile-links">
 									<a href="{% url 'list-huddle'%}">{% if user and user.meta.stats.unreadHuddles > 0 %}<span class="label label-warning">{{ user.meta.stats.unreadHuddles }} <span class="sprite sprite-envelope-small"></span></span>{% else %}<span class="sprite sprite-envelope-small"></span>{% endif %} <strong>Messages</strong></a>
-									{% if user.meta.permissions.siteOwner or user.meta.permissions.owner or user.meta.permissions.moderator %}
+									{% if user.meta.permissions.siteOwner or user.meta.permissions.moderator %}
 									<a href="{% url 'list-reports' %}"><span class="reports-indicator"><span class="sprite sprite-flag{% if pending_reports %} sprite-flag-active{% endif %}" aria-hidden="true"></span></span> <strong>Reports</strong></a>
 									{% endif %}
 								</div>

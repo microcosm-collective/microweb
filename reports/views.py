@@ -15,7 +15,7 @@ from core.views import build_pagination_links, require_authentication, respond_w
 
 def _can_moderate_reports(user):
     permissions = getattr(getattr(user, 'meta', None), 'permissions', None)
-    return bool(permissions and (permissions.siteOwner or permissions.owner or permissions.moderator))
+    return bool(permissions and (permissions.siteOwner or permissions.moderator))
 
 
 @require_authentication
