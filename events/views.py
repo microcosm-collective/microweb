@@ -4,6 +4,7 @@ import requests
 import json
 import logging
 
+from django.conf import settings
 from django.urls import reverse
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -71,7 +72,8 @@ def single(request, event_id):
         offset=offset, access_token=request.access_token)
     request.view_requests.append(fetch.get(event_url, params=event_params, headers=event_headers))
 
-    # Create request for event attendees.
+    # Create request for event attendees: the first page, as many as the API
+    # gives at once, which is every attendee of all but the largest events.
     att_url, att_params, att_headers = Event.build_attendees_request(request.get_host(), event_id,
         request.access_token)
     request.view_requests.append(fetch.get(att_url, params=att_params, headers=att_headers))
@@ -79,6 +81,8 @@ def single(request, event_id):
     # Perform requests and instantiate view objects.
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
+        attendees = AttendeeList(responses[att_url])
+        Event.get_remaining_attendees(request.get_host(), event_id, attendees, request.access_token)
     except APIException as exc:
         return respond_with_pagination_error(request, exc)
     event = Event.from_api_response(responses[event_url])
@@ -86,7 +90,6 @@ def single(request, event_id):
 
     user = Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None
 
-    attendees = AttendeeList(responses[att_url])
     attendees_yes = []
     attendees_invited = []
     user_is_attending = False
@@ -157,7 +160,8 @@ def single(request, event_id):
         'rsvp_percentage': rsvp_percentage,
 
         'is_expired': is_expired,
-        'attachments': attachments
+        'attachments': attachments,
+        'thunderforest_api_key': settings.THUNDERFOREST_API_KEY,
     }
 
     return render(request, single_template, view_data)
@@ -179,6 +183,38 @@ def csv(request, event_id):
     )
 
 
+def invited_ids(invite):
+    """
+    The profile ids in the event form's invite field, which both template
+    trees post as a comma-separated list, in order and without repeats.
+    """
+
+    ids = []
+    for part in (invite or '').split(','):
+        part = part.strip()
+        if part.isdigit() and int(part) not in ids:
+            ids.append(int(part))
+    return ids
+
+
+def send_invites(request, event_id, user_id, profile_ids):
+    """
+    Invite each profile to an event: an RSVP of maybe. Returns the error
+    response when the API refuses, or None.
+    """
+
+    if not profile_ids:
+        return None
+    attendees = [{'rsvp': 'maybe', 'profileId': profile_id} for profile_id in profile_ids]
+    try:
+        response = Event.rsvp_api(request.get_host(), event_id, user_id, attendees, access_token=request.access_token)
+    except APIException as exc:
+        return respond_with_error(request, exc)
+    if response.status_code != requests.codes.ok:
+        return HttpResponseBadRequest()
+    return None
+
+
 @require_authentication
 @require_http_methods(['GET', 'POST',])
 @cache_control(must_revalidate=True, max_age=0)
@@ -194,6 +230,7 @@ def create(request, microcosm_id):
     view_data = {
         'user': Profile(responses[request.whoami_url], summary=False),
         'site': Site(responses[request.site_url]),
+        'thunderforest_api_key': settings.THUNDERFOREST_API_KEY,
     }
     user = Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None
 
@@ -205,25 +242,9 @@ def create(request, microcosm_id):
                 event_response = event_request.create(request.get_host(), request.access_token)
             except APIException as exc:
                 return respond_with_error(request, exc)
-            # invite attendees
-            invites = request.POST.get('invite')
-            if len(invites.strip()) > 0:
-                invited_list = invites.split(",")
-                attendees = []
-                if len(invited_list) > 0:
-                    for userid in invited_list:
-                        if userid != "":
-                            attendees.append({
-                                'rsvp': 'maybe',
-                                'profileId': int(userid)
-                            })
-                    if len(attendees) > 0:
-                        try:
-                            response = Event.rsvp_api(request.get_host(), event_response.id, user.id, attendees, access_token=request.access_token)
-                        except APIException as exc:
-                            return respond_with_error(request, exc)
-                        if response.status_code != requests.codes.ok:
-                            return HttpResponseBadRequest()
+            failed = send_invites(request, event_response.id, user.id, invited_ids(form.cleaned_data['invite']))
+            if failed:
+                return failed
 
             # create comment
             if request.POST.get('firstcomment') and len(request.POST.get('firstcomment')) > 0:
@@ -256,13 +277,14 @@ def create(request, microcosm_id):
                         'content': comment,
                         'comment_form': comment_form,
                         'error': 'Sorry, one of your files was over 5MB. Please try again.',
+                        'thunderforest_api_key': settings.THUNDERFOREST_API_KEY,
                         }
                     return render(request, form_template, view_data)
 
             return HttpResponseRedirect(reverse('single-event', args=(event_response.id,)))
 
         else:
-            print('Event form is not valid')
+            logger.debug('Event form is not valid: %s', form.errors.as_json())
             view_data['form'] = form
             view_data['microcosm_id'] = microcosm_id
             return render(request, form_template, view_data)
@@ -288,7 +310,8 @@ def edit(request, event_id):
     view_data = {
         'user': Profile(responses[request.whoami_url], summary=False),
         'site': Site(responses[request.site_url]),
-        'state_edit': True
+        'state_edit': True,
+        'thunderforest_api_key': settings.THUNDERFOREST_API_KEY,
     }
 
     if request.method == 'POST':
@@ -299,6 +322,23 @@ def edit(request, event_id):
                 event_response = event_request.update(request.get_host(), request.access_token)
             except APIException as exc:
                 return respond_with_error(request, exc)
+
+            # The invite box lists everyone with an RSVP as well as the people
+            # added, so invite only those without one: inviting the rest again
+            # would turn a yes or a no back into maybe.
+            invited = invited_ids(form.cleaned_data['invite'])
+            if invited:
+                try:
+                    attendees = Event.get_attendees(host=request.get_host(), id=event_response.id,
+                        access_token=request.access_token)
+                except APIException as exc:
+                    return respond_with_error(request, exc)
+                have_rsvp = {attendee.profile_id for attendee in attendees.items.items}
+                failed = send_invites(request, event_response.id, view_data['user'].id,
+                    [profile_id for profile_id in invited if profile_id not in have_rsvp])
+                if failed:
+                    return failed
+
             return HttpResponseRedirect(reverse('single-event', args=(event_response.id,)))
         else:
             view_data['form'] = form
@@ -323,16 +363,15 @@ def edit(request, event_id):
                 attendees_json.append({
                     'id': attendee.profile.id,
                     'profileName': attendee.profile.profile_name,
-                    'avatar': attendee.profile.avatar,
+                    'avatar': getattr(attendee.profile, 'avatar', ''),
                     'sticky': 'true'
                 })
 
             if len(attendees_json) > 0:
                 view_data['attendees_json'] = json.dumps(attendees_json)
-        except APIException:
+        except APIException as exc:
             # Missing RSVPs is not critical, but we should know if it doesn't work.
-            logger.error(str(APIException))
-            pass
+            logger.error(str(exc))
 
         return render(request, form_template, view_data)
 
